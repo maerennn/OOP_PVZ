@@ -86,6 +86,10 @@ void App::Update() {
     m_PlantingSystem->HandleInput();
     m_PlantingSystem->Update(deltaTime);
 
+    glm::vec2 mousePos = Util::Input::GetCursorPosition();
+    if (Util::Input::IsKeyDown(Util::Keycode::MOUSE_LB)) {
+        LOG_DEBUG("Mouse Clicked at: x={}, y={}", mousePos.x, mousePos.y);
+    }
     // ── Render ──────────────────────────────────────────────────────────
     m_Root.Update();
 

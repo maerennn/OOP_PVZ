@@ -34,7 +34,7 @@ void SeedPacket::CreateComponents() {
     auto iconImage = std::make_shared<Util::Image>(info.iconPath);
     m_PlantIcon->SetDrawable(iconImage);
     m_PlantIcon->m_Transform.translation = {0.0f, 8.0f};  // Slightly up
-    m_PlantIcon->m_Transform.scale = {0.25f, 0.25f};  // Scale icon to fit packet
+    m_PlantIcon->m_Transform.scale = {0.15f, 0.15f};  // Scale icon to fit packet
     m_PlantIcon->SetZIndex(0.1f);
 
     // Sun cost text
@@ -46,13 +46,13 @@ void SeedPacket::CreateComponents() {
     );
     m_SunCostObject = std::make_shared<Util::GameObject>();
     m_SunCostObject->SetDrawable(m_SunCostText);
-    m_SunCostObject->m_Transform.translation = {0.0f, -22.0f};  // Bottom of packet
+    m_SunCostObject->m_Transform.translation = {0.0f, -35.0f};  // Bottom of packet
     m_SunCostObject->SetZIndex(0.1f);
 
     // Cooldown overlay (semi-transparent gray rectangle)
     m_CooldownOverlay = std::make_shared<Util::GameObject>();
     auto overlay = std::make_shared<Util::ColorRect>(
-        glm::vec2{WIDTH, HEIGHT},
+        glm::vec2{WIDTH * 0.7f, HEIGHT * 0.7f}, 
         glm::vec4{0.2f, 0.2f, 0.2f, 0.6f}  // Dark gray, semi-transparent
     );
     m_CooldownOverlay->SetDrawable(overlay);
@@ -108,8 +108,8 @@ bool SeedPacket::ContainsPoint(const glm::vec2& screenPos) const {
     glm::vec2 packetPos = m_Transform.translation;
 
     // AABB collision check
-    float halfW = WIDTH * 0.5f;
-    float halfH = HEIGHT * 0.5f;
+    float halfW = (WIDTH * 0.7f) / 2.0f;
+    float halfH = (HEIGHT * 0.7f) / 2.0f;
 
     return (screenPos.x >= packetPos.x - halfW &&
             screenPos.x <= packetPos.x + halfW &&
@@ -144,7 +144,7 @@ void SeedPacket::UpdateChildPositions() {
     // Store local offsets for each child
     glm::vec2 bgOffset = {0.0f, 0.0f};
     glm::vec2 iconOffset = {0.0f, 8.0f};
-    glm::vec2 textOffset = {0.0f, -22.0f};
+    glm::vec2 textOffset = {0.0f, -35.0f};
     glm::vec2 overlayOffset = {0.0f, 0.0f};
 
     // Update positions based on packet's world position

@@ -19,12 +19,12 @@ void SunManager::Initialize() {
     m_Root->SetZIndex(GameConfig::ZIndex::SEED_BANK);
 
     // Create sun icon
-    m_SunIcon = std::make_shared<Util::GameObject>();
-    auto sunImage = std::make_shared<Util::Image>(SUN_ICON_PATH);
-    m_SunIcon->SetDrawable(sunImage);
-    m_SunIcon->m_Transform.translation = {-575.0f, 300.0f};
-    m_SunIcon->m_Transform.scale = {0.5f, 0.5f};
-    m_SunIcon->SetZIndex(GameConfig::ZIndex::SEED_BANK + 0.1f);
+    // m_SunIcon = std::make_shared<Util::GameObject>();
+    // auto sunImage = std::make_shared<Util::Image>(SUN_ICON_PATH);
+    // m_SunIcon->SetDrawable(sunImage);
+    // m_SunIcon->m_Transform.translation = {-575.0f, 300.0f};
+    // m_SunIcon->m_Transform.scale = {0.5f, 0.5f};
+    // m_SunIcon->SetZIndex(GameConfig::ZIndex::SEED_BANK + 0.1f);
 
     // Create sun count text (wrapped in GameObject)
     m_SunText = std::make_shared<Util::Text>(
@@ -36,7 +36,7 @@ void SunManager::Initialize() {
 
     m_SunTextObject = std::make_shared<Util::GameObject>();
     m_SunTextObject->SetDrawable(m_SunText);
-    m_SunTextObject->m_Transform.translation = {-540.0f, 300.0f};
+    m_SunTextObject->m_Transform.translation = {-576.0f, 267.0f};
     m_SunTextObject->SetZIndex(GameConfig::ZIndex::SEED_BANK + 0.1f);
 
     UpdateDisplay();
@@ -68,5 +68,6 @@ void SunManager::UpdateDisplay() {
 }
 
 std::vector<std::shared_ptr<Util::GameObject>> SunManager::GetUIElements() const {
-    return {m_SunIcon, m_SunTextObject};
+    // return {m_SunIcon, m_SunTextObject};
+    return {m_SunTextObject};
 }

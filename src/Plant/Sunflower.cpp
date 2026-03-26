@@ -49,11 +49,11 @@ std::vector<std::string> Sunflower::GetAnimationFrames(const std::string& frameD
     std::vector<std::string> frames;
     frames.reserve(SUNFLOWER_FRAME_COUNT);
 
-    // First frame has different naming convention
+    // // First frame has different naming convention
     frames.push_back(frameDir + "/Sunflower0005.png");
 
     // Remaining frames: Sunflower0002.png through Sunflower0029.png
-    for (int i = 2; i <= SUNFLOWER_FRAME_COUNT; ++i) {
+    for (int i = 5; i <= SUNFLOWER_FRAME_COUNT; ++i) {
         char filename[64];
         std::snprintf(filename, sizeof(filename), "/Sunflower%04d.png", i);
         frames.push_back(frameDir + filename);

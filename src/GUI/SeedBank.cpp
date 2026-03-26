@@ -7,11 +7,11 @@
 
 // Layout constants
 namespace {
-    constexpr float BANK_X = -500.0f;           // Position from center
-    constexpr float BANK_Y = 300.0f;            // Near top
-    constexpr float PACKET_START_X = -450.0f;   // First packet X position
-    constexpr float PACKET_Y = 298.0f;          // Packets Y position
-    constexpr float PACKET_SPACING = 53.0f;     // Space between packet centers
+    constexpr float BANK_X = -420.0f;           // Position from center
+    constexpr float BANK_Y = 305.0f;            // Near top
+    constexpr float PACKET_START_X = -499.0f;   // First packet X position
+    constexpr float PACKET_Y = 305.0f;          // Packets Y position
+    constexpr float PACKET_SPACING = 70.0f;     // Space between packet centers
 }
 
 SeedBank::SeedBank() {
@@ -23,7 +23,7 @@ void SeedBank::Initialize(const std::vector<PlantType>& selectedPlants) {
     auto bgImage = std::make_shared<Util::Image>(SEED_BANK_BG);
     m_Background->SetDrawable(bgImage);
     m_Background->m_Transform.translation = {BANK_X, BANK_Y};
-    m_Background->m_Transform.scale = {1.0f, 1.0f};
+    m_Background->m_Transform.scale = {1.25f, 1.25f};
     m_Background->SetZIndex(GameConfig::ZIndex::SEED_BANK);
 
     // Create packets for each selected plant

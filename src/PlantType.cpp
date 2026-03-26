@@ -29,7 +29,7 @@ static const PlantInfo s_PlantInfo[] = {
         "Sunflower",
         Sunflower::SUNFLOWER_SUN_COST,        // 50
         Sunflower::SUNFLOWER_RECHARGE,        // 7.5f
-        SUNFLOWER_DIR "/Idle.png",
+        SUNFLOWER_DIR "/Sunflower0005.png",
         SUNFLOWER_DIR,
         []() -> std::shared_ptr<Plant> {
             auto plant = std::make_shared<Sunflower>();
