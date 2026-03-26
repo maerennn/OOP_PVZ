@@ -18,7 +18,7 @@ void CherryBomb::Initialize(const std::string& frameDirectory) {
     SetupAnimation(frames, 50, false);  // Don't loop - plays once then explodes
 
     // Default scale for plant sprite
-    m_Transform.scale = {0.4f, 0.4f};
+    m_Transform.scale = {0.3f, 0.3f};
 
     // Auto-trigger on placement (Cherry Bomb explodes shortly after planting)
     Trigger();

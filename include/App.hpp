@@ -13,7 +13,9 @@
 #include "GUI/SeedBank.hpp"
 #include "GUI/CursorItem.hpp"
 #include "GUI/GhostPlant.hpp"
+#include "Sun.hpp"
 #include <memory>
+#include <vector>
 
 class App {
 public:
@@ -33,6 +35,11 @@ private:
     void PlacePlant(PlantType type, int row, int col);
     bool IsCellOccupied(int row, int col) const;
 
+    // Sun system methods
+    void SpawnSun(int value, const glm::vec2& position);
+    void UpdateSuns(float deltaTime);
+    void CheckSunCollection();
+
     State m_CurrentState = State::START;
 
     Util::Renderer m_Root;
@@ -49,6 +56,11 @@ private:
     std::shared_ptr<CursorItem> m_CursorItem;
     std::shared_ptr<GhostPlant> m_GhostPlant;
     std::unique_ptr<PlantingSystem> m_PlantingSystem;
+
+    // Sun collection system
+    std::vector<std::shared_ptr<Sun>> m_Suns;
+    float m_SkyDropTimer = 0.0f;
+    static constexpr float SKY_DROP_INTERVAL = 12.0f;  // Seconds between sky drops
 };
 
 #endif

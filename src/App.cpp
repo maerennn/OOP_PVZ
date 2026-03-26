@@ -4,6 +4,10 @@
 #include "Util/Input.hpp"
 #include "Util/Keycode.hpp"
 #include "Util/Logger.hpp"
+#include "Sun.hpp"
+#include "Plant/Sunflower.hpp"
+#include <algorithm>
+#include <random>
 
 void App::Start() {
     LOG_TRACE("Start");
@@ -86,6 +90,19 @@ void App::Update() {
     m_PlantingSystem->HandleInput();
     m_PlantingSystem->Update(deltaTime);
 
+    // ── Update All Plants ───────────────────────────────────────────────
+    for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
+        for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
+            if (m_PlantGrid[r][c] != nullptr) {
+                m_PlantGrid[r][c]->Update(deltaTime);
+            }
+        }
+    }
+
+    // ── Update Sun Collection System ────────────────────────────────────
+    UpdateSuns(deltaTime);
+    CheckSunCollection();
+
     glm::vec2 mousePos = Util::Input::GetCursorPosition();
     if (Util::Input::IsKeyDown(Util::Keycode::MOUSE_LB)) {
         LOG_DEBUG("Mouse Clicked at: x={}, y={}", mousePos.x, mousePos.y);
@@ -122,6 +139,20 @@ void App::PlacePlant(PlantType type, int row, int col) {
     plant->SetGridPosition(row, col);
     plant->m_Transform.translation = GameConfig::CellToPosition(row, col);
 
+    // ── Wire up Sunflower callback ──────────────────────────────────────
+    if (type == PlantType::SUNFLOWER) {
+        auto sunflower = std::dynamic_pointer_cast<Sunflower>(plant);
+        if (sunflower) {
+            sunflower->SetSunProducedCallback(
+                [this](int amount, glm::vec2 position) {
+                    // Offset sun spawn slightly above the plant
+                    glm::vec2 sunPos = position + glm::vec2(0.0f, 30.0f);
+                    SpawnSun(amount, sunPos);
+                }
+            );
+        }
+    }
+
     // Add to scene and grid
     m_Root.AddChild(plant);
     m_PlantGrid[row][col] = plant;
@@ -136,4 +167,84 @@ bool App::IsCellOccupied(int row, int col) const {
         return true;  // Out of bounds = occupied
     }
     return m_PlantGrid[row][col] != nullptr;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Sun System Implementation
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::SpawnSun(int value, const glm::vec2& position) {
+    auto sun = std::make_shared<Sun>(position, value);
+    sun->Initialize();
+
+    // Set callback to add sun to manager when collected
+    sun->SetCollectedCallback([this](int sunValue) {
+        m_SunManager->AddSun(sunValue);
+        LOG_DEBUG("Collected {} sun! Total: {}", sunValue, m_SunManager->GetSun());
+    });
+
+    m_Root.AddChild(sun);
+    m_Suns.push_back(sun);
+
+    LOG_DEBUG("Spawned sun at ({}, {})", position.x, position.y);
+}
+
+void App::UpdateSuns(float deltaTime) {
+    // ── Update all existing suns ────────────────────────────────────────
+    for (auto& sun : m_Suns) {
+        sun->Update(deltaTime);
+    }
+
+    // ── Remove collected or expired suns (safe erase) ───────────────────
+    auto it = std::remove_if(m_Suns.begin(), m_Suns.end(),
+        [this](const std::shared_ptr<Sun>& sun) {
+            if (sun->ShouldRemove()) {
+                m_Root.RemoveChild(sun);
+                return true;
+            }
+            return false;
+        });
+    m_Suns.erase(it, m_Suns.end());
+
+    // ── Sky Drop Timer ──────────────────────────────────────────────────
+    m_SkyDropTimer += deltaTime;
+
+    if (m_SkyDropTimer >= SKY_DROP_INTERVAL) {
+        m_SkyDropTimer = 0.0f;
+
+        // Random X position within the lawn grid area
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> xDist(
+            GameConfig::GRID_ORIGIN_X + 50.0f,
+            GameConfig::GRID_RIGHT - 50.0f
+        );
+
+        // Random Y position in the upper lawn area
+        std::uniform_real_distribution<float> yDist(
+            GameConfig::LaneCenterY(2),  // Middle lane
+            GameConfig::LaneCenterY(0)   // Top lane
+        );
+
+        glm::vec2 skyDropPos = {xDist(gen), yDist(gen)};
+        SpawnSun(Sun::SUN_VALUE, skyDropPos);
+        LOG_DEBUG("Sky drop sun at ({}, {})", skyDropPos.x, skyDropPos.y);
+    }
+}
+
+void App::CheckSunCollection() {
+    // Only check on mouse click
+    if (!Util::Input::IsKeyDown(Util::Keycode::MOUSE_LB)) {
+        return;
+    }
+
+    glm::vec2 cursorPos = Util::Input::GetCursorPosition();
+
+    // Check each sun for click
+    for (auto& sun : m_Suns) {
+        if (sun->IsClicked(cursorPos)) {
+            sun->Collect();
+            break;  // Only collect one sun per click
+        }
+    }
 }

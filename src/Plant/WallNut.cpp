@@ -23,7 +23,7 @@ void WallNut::Initialize(const std::string& frameDirectory) {
     SetupDamageStageAnimations(healthyFrames, damagedFrames, criticalFrames, 80);
 
     // Default scale for plant sprite
-    m_Transform.scale = {0.3f, 0.3f};
+    m_Transform.scale = {0.25f, 0.25f};
 }
 
 void WallNut::Initialize(const std::string& healthyFrameDir,
@@ -35,7 +35,7 @@ void WallNut::Initialize(const std::string& healthyFrameDir,
 
     SetupDamageStageAnimations(healthyFrames, damagedFrames, criticalFrames, 80);
 
-    m_Transform.scale = {0.3f, 0.3f};
+    m_Transform.scale = {0.25f, 0.25f};
 }
 
 void WallNut::OnDamageStageChanged(DamageStage newStage) {
