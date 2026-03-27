@@ -5,7 +5,9 @@
 #include "Util/Keycode.hpp"
 #include "Util/Logger.hpp"
 #include "Sun.hpp"
+#include "Pea.hpp"
 #include "Plant/Sunflower.hpp"
+#include "Plant/ShooterPlant.hpp"
 #include <algorithm>
 #include <random>
 
@@ -90,6 +92,9 @@ void App::Update() {
     m_PlantingSystem->HandleInput();
     m_PlantingSystem->Update(deltaTime);
 
+    // ── Update Shooter Target Detection ─────────────────────────────────
+    UpdateShooterTargets();
+
     // ── Update All Plants ───────────────────────────────────────────────
     for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
         for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
@@ -98,6 +103,9 @@ void App::Update() {
             }
         }
     }
+
+    // ── Update Projectile System ────────────────────────────────────────
+    UpdateProjectiles(deltaTime);
 
     // ── Update Sun Collection System ────────────────────────────────────
     UpdateSuns(deltaTime);
@@ -151,6 +159,16 @@ void App::PlacePlant(PlantType type, int row, int col) {
                 }
             );
         }
+    }
+
+    // ── Wire up ShooterPlant callback ───────────────────────────────────
+    auto shooter = std::dynamic_pointer_cast<ShooterPlant>(plant);
+    if (shooter) {
+        shooter->SetProjectileCallback(
+            [this](ProjectileType ptype, int damage, int prow, glm::vec2 pos) {
+                SpawnProjectile(ptype, damage, prow, pos);
+            }
+        );
     }
 
     // Add to scene and grid
@@ -245,6 +263,87 @@ void App::CheckSunCollection() {
         if (sun->IsClicked(cursorPos)) {
             sun->Collect();
             break;  // Only collect one sun per click
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Projectile System Implementation
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::SpawnProjectile(ProjectileType type, int damage, int row, const glm::vec2& position) {
+    std::shared_ptr<Projectile> projectile;
+
+    switch (type) {
+        case ProjectileType::PEA:
+            projectile = std::make_shared<Pea>(damage, row, position);
+            break;
+
+        // Future projectile types:
+        // case ProjectileType::FROZEN_PEA:
+        //     projectile = std::make_shared<FrozenPea>(damage, row, position);
+        //     break;
+
+        default:
+            LOG_WARN("Unknown projectile type: {}", static_cast<int>(type));
+            return;
+    }
+
+    projectile->Initialize();
+    m_Root.AddChild(projectile);
+    m_Projectiles.push_back(projectile);
+
+    LOG_DEBUG("Spawned projectile at ({}, {}) in row {}",
+              position.x, position.y, row);
+}
+
+void App::UpdateProjectiles(float deltaTime) {
+    // ── Update all projectiles ──────────────────────────────────────────
+    for (auto& projectile : m_Projectiles) {
+        projectile->Update(deltaTime);
+    }
+
+    // ── TODO: Projectile-Zombie Collision Detection ─────────────────────
+    // Future Phase 3: Check each projectile against zombies in the same row
+    // for (auto& projectile : m_Projectiles) {
+    //     if (!projectile->IsActive()) continue;
+    //     for (auto& zombie : m_Zombies) {
+    //         if (zombie->GetRow() == projectile->GetRow()) {
+    //             // Check AABB collision
+    //             // If hit: zombie->TakeDamage(projectile->GetDamage());
+    //             //         projectile->OnHit();
+    //         }
+    //     }
+    // }
+
+    // ── Remove inactive or off-screen projectiles (safe erase) ──────────
+    auto it = std::remove_if(m_Projectiles.begin(), m_Projectiles.end(),
+        [this](const std::shared_ptr<Projectile>& proj) {
+            if (!proj->IsActive() || proj->IsOffScreen(GameConfig::ZOMBIE_ZONE_RIGHT)) {
+                m_Root.RemoveChild(proj);
+                return true;
+            }
+            return false;
+        });
+    m_Projectiles.erase(it, m_Projectiles.end());
+}
+
+void App::UpdateShooterTargets() {
+    // ══════════════════════════════════════════════════════════════════════
+    // TEMPORARY STUB: Force all shooters to have targets for testing
+    // TODO Phase 3: Replace with actual zombie detection per lane
+    // ══════════════════════════════════════════════════════════════════════
+
+    for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
+        for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
+            if (m_PlantGrid[r][c] != nullptr) {
+                auto shooter = std::dynamic_pointer_cast<ShooterPlant>(m_PlantGrid[r][c]);
+                if (shooter) {
+                    // TEMP: Always has target so we can test pea firing
+                    // Phase 3: Check if any zombie exists in row 'r'
+                    shooter->SetHasTarget(true);
+                }
+            }
         }
     }
 }

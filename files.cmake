@@ -19,6 +19,8 @@ set(SRC_FILES
     SunManager.cpp
     PlantingSystem.cpp
     Sun.cpp
+    Projectile.cpp
+    Pea.cpp
 
     # GUI System
     GUI/SeedPacket.cpp
@@ -53,6 +55,8 @@ set(INCLUDE_FILES
     SunManager.hpp
     PlantingSystem.hpp
     Sun.hpp
+    Projectile.hpp
+    Pea.hpp
 
     # GUI System
     GUI/SeedPacket.hpp

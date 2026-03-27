@@ -14,6 +14,7 @@
 #include "GUI/CursorItem.hpp"
 #include "GUI/GhostPlant.hpp"
 #include "Sun.hpp"
+#include "Projectile.hpp"
 #include <memory>
 #include <vector>
 
@@ -40,6 +41,11 @@ private:
     void UpdateSuns(float deltaTime);
     void CheckSunCollection();
 
+    // Projectile system methods
+    void SpawnProjectile(ProjectileType type, int damage, int row, const glm::vec2& position);
+    void UpdateProjectiles(float deltaTime);
+    void UpdateShooterTargets();
+
     State m_CurrentState = State::START;
 
     Util::Renderer m_Root;
@@ -61,6 +67,9 @@ private:
     std::vector<std::shared_ptr<Sun>> m_Suns;
     float m_SkyDropTimer = 0.0f;
     static constexpr float SKY_DROP_INTERVAL = 12.0f;  // Seconds between sky drops
+
+    // Projectile system
+    std::vector<std::shared_ptr<Projectile>> m_Projectiles;
 };
 
 #endif

@@ -34,7 +34,7 @@ void SeedPacket::CreateComponents() {
     auto iconImage = std::make_shared<Util::Image>(info.iconPath);
     m_PlantIcon->SetDrawable(iconImage);
     m_PlantIcon->m_Transform.translation = {0.0f, 8.0f};  // Slightly up
-    m_PlantIcon->m_Transform.scale = {0.15f, 0.15f};  // Scale icon to fit packet
+    m_PlantIcon->m_Transform.scale = {0.2f, 0.2f};  // Scale icon to fit packet
     m_PlantIcon->SetZIndex(0.1f);
 
     // Sun cost text

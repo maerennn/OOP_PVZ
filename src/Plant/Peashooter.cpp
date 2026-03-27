@@ -17,25 +17,17 @@ void Peashooter::Initialize(const std::string& frameDirectory) {
     SetupAnimation(frames, 50, true);
 
     // Default scale for plant sprite
-    m_Transform.scale = {0.25f, 0.25f};
+    m_Transform.scale = {0.28f, 0.28f};
 }
 
 void Peashooter::OnAttack() {
-    // TODO: Spawn a pea projectile in the game world
-    // The projectile system would handle:
-    // - Creating a Pea at this plant's position
-    // - Moving it across the lane
-    // - Collision detection with zombies
-    // - Applying damage on hit
-    //
-    // Example pseudocode:
-    // auto pea = std::make_shared<Projectile>(
-    //     ProjectileType::PEA,
-    //     m_Damage,
-    //     GetRow(),
-    //     m_Transform.translation
-    // );
-    // GameWorld::SpawnProjectile(pea);
+    // Use base class implementation which fires the callback
+    // This allows App to spawn the actual projectile
+    ShooterPlant::OnAttack();
+
+    // Peashooter-specific behavior could be added here:
+    // - Play shooting sound
+    // - Trigger shooting animation
 }
 
 std::vector<std::string> Peashooter::GetAnimationFrames(const std::string& frameDir) {

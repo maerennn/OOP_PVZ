@@ -3,6 +3,7 @@
 
 #include "Plant/Plant.hpp"
 #include "Plant/IAttacker.hpp"
+#include <functional>
 
 /**
  * @file ShooterPlant.hpp
@@ -22,6 +23,15 @@
 
 class ShooterPlant : public Plant, public IAttacker {
 public:
+    /**
+     * @brief Callback type for when a projectile should be spawned.
+     * Parameters: ProjectileType, damage, row, position
+     */
+    using ProjectileCallback = std::function<void(ProjectileType type,
+                                                   int damage,
+                                                   int row,
+                                                   glm::vec2 position)>;
+
     ShooterPlant(const std::string& name,
                  int damage,
                  float attackInterval,
@@ -51,8 +61,16 @@ public:
     bool HasTargetInLane() const { return m_HasTarget; }
     void SetHasTarget(bool hasTarget) { m_HasTarget = hasTarget; }
 
+    /**
+     * @brief Set callback for when projectile should be spawned.
+     * The callback is invoked by OnAttack() with all necessary data.
+     */
+    void SetProjectileCallback(ProjectileCallback callback) {
+        m_OnProjectile = std::move(callback);
+    }
+
 protected:
-    // Called when attack is ready - override for custom projectile behavior
+    // Called when attack is ready - fires the callback to spawn projectile
     virtual void OnAttack();
 
     int m_Damage;
@@ -61,6 +79,8 @@ protected:
 
     float m_AttackTimer = 0.0f;      // Time since last attack
     bool m_HasTarget = false;        // Is there a zombie in this lane?
+
+    ProjectileCallback m_OnProjectile;  // Callback to spawn projectile
 };
 
 #endif // SHOOTER_PLANT_HPP

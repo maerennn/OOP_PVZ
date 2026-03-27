@@ -69,8 +69,8 @@ public:
     float GetCooldownProgress() const;  // 0.0 (full cooldown) to 1.0 (ready)
 
     // Packet dimensions (for layout)
-    static constexpr float WIDTH = 50.0f;
-    static constexpr float HEIGHT = 70.0f;
+    static constexpr float WIDTH = 100.0f;
+    static constexpr float HEIGHT = 140.0f;
 
     /**
      * @brief Get all child GameObjects for adding to renderer.

@@ -19,7 +19,7 @@ void GhostPlant::SetPlantType(PlantType type) {
     SetDrawable(iconImage);
 
     // Scale to match placed plants
-    m_Transform.scale = {0.3f, 0.3f};
+    m_Transform.scale = {0.25f, 0.25f};
 
     UpdateAppearance();
     SetVisible(true);
