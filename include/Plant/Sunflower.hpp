@@ -16,6 +16,8 @@
  * Unlike ShooterPlants, Sunflower does NOT implement IAttacker.
  * Its role is purely economic - generating sun for the player.
  *
+ * Animation paths are cached via ResourceManager.
+ *
  * Stats:
  * - Production Amount: 25 sun per production
  * - Production Rate: 24 seconds between productions
@@ -30,7 +32,6 @@ public:
     static constexpr float SUNFLOWER_PRODUCTION_RATE = 24.0f;  // seconds
     static constexpr int SUNFLOWER_SUN_COST = 50;
     static constexpr float SUNFLOWER_RECHARGE = 7.5f;
-    static constexpr int SUNFLOWER_FRAME_COUNT = 29;
 
     // Callback type for when sun is produced
     using SunProducedCallback = std::function<void(int amount, glm::vec2 position)>;
@@ -38,7 +39,7 @@ public:
     Sunflower();
     virtual ~Sunflower() = default;
 
-    // Initialize with animation frames
+    // Initialize with animation from ResourceManager (frameDirectory ignored)
     void Initialize(const std::string& frameDirectory);
 
     // Plant interface
@@ -56,8 +57,6 @@ public:
     }
 
 private:
-    static std::vector<std::string> GetAnimationFrames(const std::string& frameDir);
-
     int m_ProductionAmount = SUNFLOWER_PRODUCTION_AMOUNT;
     float m_ProductionRate = SUNFLOWER_PRODUCTION_RATE;
     float m_ProductionTimer = 0.0f;

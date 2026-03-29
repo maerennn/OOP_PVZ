@@ -4,8 +4,10 @@
 #include "Util/Input.hpp"
 #include "Util/Keycode.hpp"
 #include "Util/Logger.hpp"
+#include "ResourceManager.hpp"
 #include "Sun.hpp"
 #include "Pea.hpp"
+#include "NormalZombie.hpp"
 #include "Plant/Sunflower.hpp"
 #include "Plant/ShooterPlant.hpp"
 #include <algorithm>
@@ -13,6 +15,11 @@
 
 void App::Start() {
     LOG_TRACE("Start");
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Initialize ResourceManager FIRST - caches all animation paths
+    // ══════════════════════════════════════════════════════════════════════
+    ResourceManager::GetInstance().Initialize();
 
     // ── Background ──────────────────────────────────────────────────────
     m_Background = std::make_shared<Util::GameObject>();
@@ -92,6 +99,12 @@ void App::Update() {
     m_PlantingSystem->HandleInput();
     m_PlantingSystem->Update(deltaTime);
 
+    // ── Update Zombie System ────────────────────────────────────────────
+    UpdateZombies(deltaTime);
+
+    // ── Check Zombie-Plant Collisions ───────────────────────────────────
+    CheckZombiePlantCollisions();
+
     // ── Update Shooter Target Detection ─────────────────────────────────
     UpdateShooterTargets();
 
@@ -103,6 +116,9 @@ void App::Update() {
             }
         }
     }
+
+    // ── Remove Dead Plants ──────────────────────────────────────────────
+    RemoveDeadPlants();
 
     // ── Update Projectile System ────────────────────────────────────────
     UpdateProjectiles(deltaTime);
@@ -303,18 +319,30 @@ void App::UpdateProjectiles(float deltaTime) {
         projectile->Update(deltaTime);
     }
 
-    // ── TODO: Projectile-Zombie Collision Detection ─────────────────────
-    // Future Phase 3: Check each projectile against zombies in the same row
-    // for (auto& projectile : m_Projectiles) {
-    //     if (!projectile->IsActive()) continue;
-    //     for (auto& zombie : m_Zombies) {
-    //         if (zombie->GetRow() == projectile->GetRow()) {
-    //             // Check AABB collision
-    //             // If hit: zombie->TakeDamage(projectile->GetDamage());
-    //             //         projectile->OnHit();
-    //         }
-    //     }
-    // }
+    // ── Projectile-Zombie Collision Detection ───────────────────────────
+    for (auto& projectile : m_Projectiles) {
+        if (!projectile->IsActive()) continue;
+
+        for (auto& zombie : m_Zombies) {
+            if (zombie->IsDead() || zombie->GetState() == Zombie::State::DYING) continue;
+            if (zombie->GetRow() != projectile->GetRow()) continue;
+
+            // AABB Collision check
+            float projX = projectile->m_Transform.translation.x;
+            float zombieLeft = zombie->GetLeftEdge();
+            float zombieRight = zombie->GetRightEdge();
+
+            if (projX >= zombieLeft && projX <= zombieRight) {
+                // Hit! Apply damage and deactivate projectile
+                zombie->TakeDamage(projectile->GetDamage());
+                projectile->OnHit();
+
+                LOG_DEBUG("Projectile hit {} for {} damage! Zombie HP: {}",
+                          zombie->GetName(), projectile->GetDamage(), zombie->GetHealth());
+                break;  // One projectile hits one zombie
+            }
+        }
+    }
 
     // ── Remove inactive or off-screen projectiles (safe erase) ──────────
     auto it = std::remove_if(m_Projectiles.begin(), m_Projectiles.end(),
@@ -330,19 +358,130 @@ void App::UpdateProjectiles(float deltaTime) {
 
 void App::UpdateShooterTargets() {
     // ══════════════════════════════════════════════════════════════════════
-    // TEMPORARY STUB: Force all shooters to have targets for testing
-    // TODO Phase 3: Replace with actual zombie detection per lane
+    // Detect zombies in each lane and update shooter targets accordingly
     // ══════════════════════════════════════════════════════════════════════
 
+    // First, count zombies per row
+    bool zombieInRow[GameConfig::GRID_ROWS] = {false};
+    for (const auto& zombie : m_Zombies) {
+        if (!zombie->IsDead() && zombie->GetRow() >= 0 && zombie->GetRow() < GameConfig::GRID_ROWS) {
+            zombieInRow[zombie->GetRow()] = true;
+        }
+    }
+
+    // Update all shooter plants
     for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
         for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
             if (m_PlantGrid[r][c] != nullptr) {
                 auto shooter = std::dynamic_pointer_cast<ShooterPlant>(m_PlantGrid[r][c]);
                 if (shooter) {
-                    // TEMP: Always has target so we can test pea firing
-                    // Phase 3: Check if any zombie exists in row 'r'
-                    shooter->SetHasTarget(true);
+                    shooter->SetHasTarget(zombieInRow[r]);
                 }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Zombie System Implementation
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::SpawnZombie(int row) {
+    auto zombie = std::make_shared<NormalZombie>();
+    zombie->Initialize();
+    zombie->SetRow(row);
+
+    // Position at right edge of screen, centered in lane
+    float spawnX = GameConfig::ZOMBIE_SPAWN_X;
+    float spawnY = GameConfig::LaneCenterY(row);
+    zombie->m_Transform.translation = {spawnX, spawnY};
+
+    m_Root.AddChild(zombie);
+    m_Zombies.push_back(zombie);
+
+    LOG_DEBUG("Spawned NormalZombie at row {}, position ({}, {})", row, spawnX, spawnY);
+}
+
+void App::UpdateZombies(float deltaTime) {
+    // ── Spawn Timer (temporary wave system for testing) ─────────────────
+    m_ZombieSpawnTimer += deltaTime;
+
+    if (m_ZombieSpawnTimer >= ZOMBIE_SPAWN_INTERVAL) {
+        m_ZombieSpawnTimer = 0.0f;
+
+        // Spawn zombie in random row
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> rowDist(0, GameConfig::GRID_ROWS - 1);
+
+        int row = rowDist(gen);
+        SpawnZombie(row);
+    }
+
+    // ── Update all zombies ──────────────────────────────────────────────
+    for (auto& zombie : m_Zombies) {
+        zombie->Update(deltaTime);
+    }
+
+    // ── Remove dead zombies (safe erase) ────────────────────────────────
+    auto it = std::remove_if(m_Zombies.begin(), m_Zombies.end(),
+        [this](const std::shared_ptr<Zombie>& zombie) {
+            if (zombie->ShouldRemove()) {
+                m_Root.RemoveChild(zombie);
+                return true;
+            }
+            return false;
+        });
+    m_Zombies.erase(it, m_Zombies.end());
+}
+
+void App::CheckZombiePlantCollisions() {
+    // ══════════════════════════════════════════════════════════════════════
+    // For each zombie in WALKING state, check if it has reached a plant
+    // ══════════════════════════════════════════════════════════════════════
+
+    for (auto& zombie : m_Zombies) {
+        // Only check walking zombies
+        if (zombie->GetState() != Zombie::State::WALKING) continue;
+
+        int row = zombie->GetRow();
+        float zombieLeft = zombie->GetLeftEdge();
+
+        // Check each column from right to left for plants in this row
+        for (int col = GameConfig::GRID_COLS - 1; col >= 0; --col) {
+            auto& plant = m_PlantGrid[row][col];
+            if (!plant || !plant->IsAlive()) continue;
+
+            // Get plant position and hitbox
+            glm::vec2 plantPos = plant->m_Transform.translation;
+            float plantHalfWidth = 30.0f;  // Approximate plant hitbox half-width
+            float plantRight = plantPos.x + plantHalfWidth;
+
+            // Check if zombie has reached this plant
+            if (zombieLeft <= plantRight) {
+                // Zombie reached plant - switch to ATTACKING
+                zombie->SetTargetPlant(plant.get());
+                zombie->SetState(Zombie::State::ATTACKING);
+                LOG_DEBUG("Zombie {} attacking plant at row {} col {}",
+                          zombie->GetName(), row, col);
+                break;  // Only attack one plant at a time
+            }
+        }
+    }
+}
+
+void App::RemoveDeadPlants() {
+    // ══════════════════════════════════════════════════════════════════════
+    // Remove plants that have been destroyed by zombies
+    // ══════════════════════════════════════════════════════════════════════
+
+    for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
+        for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
+            auto& plant = m_PlantGrid[r][c];
+            if (plant && !plant->IsAlive()) {
+                LOG_DEBUG("Removing dead plant at row {} col {}", r, c);
+                m_Root.RemoveChild(plant);
+                plant.reset();  // Remove from grid
             }
         }
     }

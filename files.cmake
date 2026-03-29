@@ -21,6 +21,11 @@ set(SRC_FILES
     Sun.cpp
     Projectile.cpp
     Pea.cpp
+    ResourceManager.cpp
+
+    # Zombie System
+    Zombie.cpp
+    NormalZombie.cpp
 
     # GUI System
     GUI/SeedPacket.cpp
@@ -57,6 +62,11 @@ set(INCLUDE_FILES
     Sun.hpp
     Projectile.hpp
     Pea.hpp
+    ResourceManager.hpp
+
+    # Zombie System
+    Zombie.hpp
+    NormalZombie.hpp
 
     # GUI System
     GUI/SeedPacket.hpp

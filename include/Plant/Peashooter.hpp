@@ -12,6 +12,8 @@
  * - Identity: Is-a ShooterPlant (which is-a Plant)
  * - Ability: Inherited from ShooterPlant (implements IAttacker)
  *
+ * Animation paths are cached via ResourceManager.
+ *
  * Stats:
  * - Damage: 20 per pea
  * - Attack Interval: 1.5 seconds
@@ -27,20 +29,16 @@ public:
     static constexpr float PEASHOOTER_ATTACK_INTERVAL = 1.5f;
     static constexpr int PEASHOOTER_SUN_COST = 100;
     static constexpr float PEASHOOTER_RECHARGE = 7.5f;
-    static constexpr int PEASHOOTER_FRAME_COUNT = 25;
 
     Peashooter();
     virtual ~Peashooter() = default;
 
-    // Initialize with animation frames
+    // Initialize with animation from ResourceManager (frameDirectory ignored)
     void Initialize(const std::string& frameDirectory);
 
 protected:
     // Override to spawn actual pea projectiles
     void OnAttack() override;
-
-private:
-    static std::vector<std::string> GetAnimationFrames(const std::string& frameDir);
 };
 
 #endif // PEASHOOTER_HPP

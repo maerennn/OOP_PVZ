@@ -15,6 +15,7 @@
 #include "GUI/GhostPlant.hpp"
 #include "Sun.hpp"
 #include "Projectile.hpp"
+#include "Zombie.hpp"
 #include <memory>
 #include <vector>
 
@@ -46,6 +47,12 @@ private:
     void UpdateProjectiles(float deltaTime);
     void UpdateShooterTargets();
 
+    // Zombie system methods
+    void SpawnZombie(int row);
+    void UpdateZombies(float deltaTime);
+    void CheckZombiePlantCollisions();
+    void RemoveDeadPlants();
+
     State m_CurrentState = State::START;
 
     Util::Renderer m_Root;
@@ -70,6 +77,11 @@ private:
 
     // Projectile system
     std::vector<std::shared_ptr<Projectile>> m_Projectiles;
+
+    // Zombie system
+    std::vector<std::shared_ptr<Zombie>> m_Zombies;
+    float m_ZombieSpawnTimer = 0.0f;
+    static constexpr float ZOMBIE_SPAWN_INTERVAL = 8.0f;  // Seconds between spawns (for testing)
 };
 
 #endif

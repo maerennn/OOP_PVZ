@@ -13,6 +13,8 @@
  * Suns can be produced by:
  * - Sunflowers (appear near the plant)
  * - Sky drops (fall from above)
+ * 
+ * Animation paths are cached via ResourceManager.
  */
 class Sun : public Util::GameObject {
 public:
@@ -22,7 +24,6 @@ public:
     static constexpr float CLICK_RADIUS = 40.0f;        // Click detection radius
     static constexpr float HOVER_AMPLITUDE = 5.0f;      // Hover animation amplitude
     static constexpr float HOVER_SPEED = 3.0f;          // Hover animation speed
-    static constexpr int FRAME_COUNT = 13;
 
     // Callback type for when sun is collected
     using CollectedCallback = std::function<void(int value)>;
@@ -36,7 +37,7 @@ public:
     virtual ~Sun() = default;
 
     /**
-     * @brief Initialize the sun animation.
+     * @brief Initialize the sun animation via ResourceManager.
      */
     void Initialize();
 
@@ -72,8 +73,6 @@ public:
     int GetValue() const { return m_Value; }
 
 private:
-    static std::vector<std::string> GetAnimationFrames();
-
     int m_Value;
     float m_Lifetime;
     float m_HoverTime = 0.0f;

@@ -1,5 +1,5 @@
 #include "Plant/Sunflower.hpp"
-#include <cstdio>
+#include "ResourceManager.hpp"
 
 Sunflower::Sunflower()
     : Plant("Sunflower",
@@ -9,9 +9,11 @@ Sunflower::Sunflower()
 {
 }
 
-void Sunflower::Initialize(const std::string& frameDirectory) {
-    auto frames = GetAnimationFrames(frameDirectory);
-    SetupAnimation(frames, 50, true);
+void Sunflower::Initialize(const std::string& /*frameDirectory*/) {
+    // Get animation from ResourceManager (cached paths, new instance)
+    auto animation = ResourceManager::GetInstance().CreateAnimation(
+        ResourceManager::PLANT_SUNFLOWER_IDLE, true);
+    SetDrawable(animation);
 
     // Default scale for plant sprite
     m_Transform.scale = {0.25f, 0.25f};
@@ -37,27 +39,4 @@ void Sunflower::Produce() {
     if (m_OnSunProduced) {
         m_OnSunProduced(m_ProductionAmount, m_Transform.translation);
     }
-
-    // TODO: The game world would handle:
-    // - Creating a Sun object near this plant
-    // - Animating it floating up slightly
-    // - Making it clickable to collect
-    // - Adding the sun value to player's total
-}
-
-std::vector<std::string> Sunflower::GetAnimationFrames(const std::string& frameDir) {
-    std::vector<std::string> frames;
-    frames.reserve(SUNFLOWER_FRAME_COUNT);
-
-    // // First frame has different naming convention
-    frames.push_back(frameDir + "/Sunflower0005.png");
-
-    // Remaining frames: Sunflower0002.png through Sunflower0029.png
-    for (int i = 5; i <= SUNFLOWER_FRAME_COUNT; ++i) {
-        char filename[64];
-        std::snprintf(filename, sizeof(filename), "/Sunflower%04d.png", i);
-        frames.push_back(frameDir + filename);
-    }
-
-    return frames;
 }

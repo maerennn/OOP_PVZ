@@ -1,6 +1,6 @@
 #include "Sun.hpp"
+#include "ResourceManager.hpp"
 #include "GameConfig.hpp"
-#include <cstdio>
 #include <cmath>
 
 Sun::Sun(const glm::vec2& position, int value)
@@ -13,14 +13,9 @@ Sun::Sun(const glm::vec2& position, int value)
 }
 
 void Sun::Initialize() {
-    auto frames = GetAnimationFrames();
-    m_Animation = std::make_shared<Util::Animation>(
-        frames,
-        true,   // play immediately
-        50,     // ms per frame
-        true,   // loop
-        0       // no cooldown
-    );
+    // Get animation from ResourceManager (cached paths, new instance)
+    m_Animation = ResourceManager::GetInstance().CreateAnimation(
+        ResourceManager::SUN_FLOATING, true);
     SetDrawable(m_Animation);
 
     // Scale the sun sprite
@@ -57,18 +52,4 @@ void Sun::Collect() {
     if (m_OnCollected) {
         m_OnCollected(m_Value);
     }
-}
-
-std::vector<std::string> Sun::GetAnimationFrames() {
-    std::vector<std::string> frames;
-    frames.reserve(FRAME_COUNT);
-
-    for (int i = 1; i <= FRAME_COUNT; ++i) {
-        char filename[128];
-        std::snprintf(filename, sizeof(filename),
-            RESOURCE_DIR "/Sun-20260312T155248Z-3-001/Sun/Sun%04d.png", i);
-        frames.push_back(filename);
-    }
-
-    return frames;
 }

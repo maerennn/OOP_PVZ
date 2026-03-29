@@ -2,10 +2,10 @@
 #include "Plants.hpp"
 
 // Plant resource directories
-#define PEASHOOTER_DIR RESOURCE_DIR "/plants/Peashooter-20260312T155048Z-3-001/Peashooter"
-#define SUNFLOWER_DIR RESOURCE_DIR "/plants/Sunflower-20260312T155100Z-3-001/Sunflower"
-#define WALLNUT_DIR RESOURCE_DIR "/plants/WallNut-20260312T155116Z-3-001/WallNut"
-#define CHERRYBOMB_DIR RESOURCE_DIR "/plants/CherryBomb-20260312T155108Z-3-001/CherryBomb"
+#define PEASHOOTER_DIR RESOURCE_DIR "/plants/Peashooter"
+#define SUNFLOWER_DIR RESOURCE_DIR "/plants/Sunflower"
+#define WALLNUT_DIR RESOURCE_DIR "/plants/WallNut"
+#define CHERRYBOMB_DIR RESOURCE_DIR "/plants/CherryBomb"
 
 // Static array of plant info - order must match PlantType enum
 static const PlantInfo s_PlantInfo[] = {
