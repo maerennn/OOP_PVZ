@@ -82,6 +82,10 @@ private:
     std::vector<std::shared_ptr<Zombie>> m_Zombies;
     float m_ZombieSpawnTimer = 0.0f;
     static constexpr float ZOMBIE_SPAWN_INTERVAL = 8.0f;  // Seconds between spawns (for testing)
+
+    // Game state
+    bool m_GameOver = false;
+    void CheckGameOver();
 };
 
 #endif

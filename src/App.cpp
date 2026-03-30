@@ -89,6 +89,16 @@ void App::Start() {
 }
 
 void App::Update() {
+    // ── Check Game Over ─────────────────────────────────────────────────
+    if (m_GameOver) {
+        m_Root.Update();  // Still render
+        if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
+            Util::Input::IfExit()) {
+            m_CurrentState = State::END;
+        }
+        return;  // Skip gameplay updates
+    }
+
     // ── Update GUI Systems ──────────────────────────────────────────────
     float deltaTime = 1.0f / 60.0f;  // Fixed timestep for now
 
@@ -101,6 +111,8 @@ void App::Update() {
 
     // ── Update Zombie System ────────────────────────────────────────────
     UpdateZombies(deltaTime);
+    CheckGameOver();  // Check if zombie reached the house
+    if (m_GameOver) return;  // Early exit if game just ended
 
     // ── Check Zombie-Plant Collisions ───────────────────────────────────
     CheckZombiePlantCollisions();
@@ -483,6 +495,26 @@ void App::RemoveDeadPlants() {
                 m_Root.RemoveChild(plant);
                 plant.reset();  // Remove from grid
             }
+        }
+    }
+}
+
+void App::CheckGameOver() {
+    // ═══════════════════════════════════════════════════════════════════════
+    // Check if any zombie has reached the house (left edge of lawn)
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    for (const auto& zombie : m_Zombies) {
+        if (zombie->GetState() == Zombie::State::DEAD) continue;
+        
+        float zombieX = zombie->GetTransform().translation.x;
+        if (zombieX < GameConfig::HOUSE_X) {
+            LOG_ERROR("═══════════════════════════════════════════════");
+            LOG_ERROR("           GAME OVER - Zombies ate your brains!");
+            LOG_ERROR("═══════════════════════════════════════════════");
+            m_GameOver = true;
+            m_CurrentState = State::END;
+            return;
         }
     }
 }

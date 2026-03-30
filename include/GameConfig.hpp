@@ -129,6 +129,7 @@ inline float LaneCenterY(int row) {
 
 // ── Gameplay Constants ──────────────────────────────────────────────────────
 constexpr float ZOMBIE_SPAWN_X = ZOMBIE_ZONE_RIGHT;  // zombies appear at right edge
+constexpr float HOUSE_X = MOWER_ZONE_RIGHT - 50.0f;  // Game over if zombie reaches this X
 constexpr int STARTING_SUN = 999;  // Initial sun amount for player
 
 // ── Seed Bank Layout ────────────────────────────────────────────────────────

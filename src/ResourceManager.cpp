@@ -35,7 +35,7 @@ void ResourceManager::Initialize() {
         ZOMBIE_BASIC_ATTACKING,
         GenerateFramePaths(
             RESOURCE_DIR "/zombies/Basic Zombie/Attacking/basiczombie%04d.png",
-            138, 178),
+            138, 158),
         50,
         true
     );
@@ -54,10 +54,105 @@ void ResourceManager::Initialize() {
     RegisterAnimation(
         ZOMBIE_BASIC_DYING,
         GenerateFramePaths(
-            RESOURCE_DIR "/zombies/Basic Zombie/Dead/noheadzombie%04d.png",
+            RESOURCE_DIR "/zombies/SharedNoHead/Dead/basiczombie%04d.png",
             179, 217),
         50,
         false  // plays once then stops
+    );
+
+    // ── Conehead Zombie ─────────────────────────────────────────────────────
+    RegisterAnimation(
+        ZOMBIE_CONEHEAD_WALKING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/Conehead/Walking/conehead%04d.png",
+            46, 137),
+        50,
+        true
+    );
+
+    RegisterAnimation(
+        ZOMBIE_CONEHEAD_ATTACKING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/Conehead/Attacking/conehead%04d.png",
+            138, 178),
+        50,
+        true
+    );
+
+    // Conehead uses same dying animation as basic zombie (loses cone when damaged)
+    RegisterAnimation(
+        ZOMBIE_CONEHEAD_DYING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/SharedNoHead/Dead/basiczombie%04d.png",
+            179, 217),
+        50,
+        false
+    );
+
+    // ── Buckethead Zombie ───────────────────────────────────────────────────
+    RegisterAnimation(
+        ZOMBIE_BUCKETHEAD_WALKING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/Buckethead/Walking/buckethead%04d.png",
+            45, 137),
+        50,
+        true
+    );
+
+    RegisterAnimation(
+        ZOMBIE_BUCKETHEAD_ATTACKING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/Buckethead/Attacking/buckethead%04d.png",
+            138, 178),
+        50,
+        true
+    );
+
+    // Buckethead uses same dying animation as basic zombie
+    RegisterAnimation(
+        ZOMBIE_BUCKETHEAD_DYING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/SharedNoHead/Dead/basiczombie%04d.png",
+            179, 217),
+        50,
+        false
+    );
+
+    // ── Pole Vaulter Zombie ─────────────────────────────────────────────────
+    RegisterAnimation(
+        ZOMBIE_POLEVAULT_WALKING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/polevaulter/Walking 2/polevaulter%04d.png",
+            87, 138),
+        50,
+        true
+    );
+
+    RegisterAnimation(
+        ZOMBIE_POLEVAULT_ATTACKING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/polevaulter/Attacking/polevaulter%04d.png",
+            166, 193),
+        50,
+        true
+    );
+
+    RegisterAnimation(
+        ZOMBIE_POLEVAULT_DYING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/polevaulter/Dying/polevaulter%04d.png",
+            139, 157),
+        50,
+        false
+    );
+
+    RegisterAnimation(
+        ZOMBIE_POLEVAULT_JUMP,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/polevaulter/Jump 0052-0086/polevaulter%04d.png",
+            52, 86),
+        50,
+        false
     );
 
     // ══════════════════════════════════════════════════════════════════════
@@ -69,8 +164,8 @@ void ResourceManager::Initialize() {
         PLANT_SUNFLOWER_IDLE,
         GenerateFramePaths(
             RESOURCE_DIR "/plants/Sunflower/Sunflower%04d.png",
-            5, 29),
-        50,
+            5, 17),
+        80,
         true
     );
 
@@ -99,7 +194,7 @@ void ResourceManager::Initialize() {
         PLANT_WALLNUT_DAMAGED,
         GenerateFramePaths(
             RESOURCE_DIR "/plants/WallNut/degrade1/walldegrade1%04d.png",
-            1, 22),
+            1, 13),
         80,
         true
     );
@@ -109,7 +204,7 @@ void ResourceManager::Initialize() {
         PLANT_WALLNUT_CRITICAL,
         GenerateFramePaths(
             RESOURCE_DIR "/plants/WallNut/degrade2/walldegrade2%04d.png",
-            1, 13),
+            1, 22),
         80,
         true
     );

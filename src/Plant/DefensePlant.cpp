@@ -57,23 +57,13 @@ void DefensePlant::OnDamageStageChanged(DamageStage newStage) {
 }
 
 void DefensePlant::SetupDamageStageAnimations(
-    const std::vector<std::string>& healthyFrames,
-    const std::vector<std::string>& damagedFrames,
-    const std::vector<std::string>& criticalFrames,
-    int frameInterval)
+    std::shared_ptr<Util::Animation> healthyAnim,
+    std::shared_ptr<Util::Animation> damagedAnim,
+    std::shared_ptr<Util::Animation> criticalAnim)
 {
-    if (!healthyFrames.empty()) {
-        m_HealthyAnimation = std::make_shared<Util::Animation>(
-            healthyFrames, true, frameInterval, true, 0);
-    }
-    if (!damagedFrames.empty()) {
-        m_DamagedAnimation = std::make_shared<Util::Animation>(
-            damagedFrames, true, frameInterval, true, 0);
-    }
-    if (!criticalFrames.empty()) {
-        m_CriticalAnimation = std::make_shared<Util::Animation>(
-            criticalFrames, true, frameInterval, true, 0);
-    }
+    m_HealthyAnimation = std::move(healthyAnim);
+    m_DamagedAnimation = std::move(damagedAnim);
+    m_CriticalAnimation = std::move(criticalAnim);
 
     // Start with healthy animation
     if (m_HealthyAnimation) {

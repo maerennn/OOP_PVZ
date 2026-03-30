@@ -17,6 +17,8 @@
  * - HEALTHY: 67-100% health (full appearance)
  * - DAMAGED: 34-66% health (cracked/damaged appearance)
  * - CRITICAL: 0-33% health (severely damaged appearance)
+ *
+ * Animations should be obtained via ResourceManager::CreateAnimation().
  */
 
 class DefensePlant : public Plant {
@@ -55,12 +57,16 @@ protected:
     // Called when damage stage changes - override to update visuals
     virtual void OnDamageStageChanged(DamageStage newStage);
 
-    // Setup animations for each damage stage
+    /**
+     * @brief Setup animations for each damage stage.
+     * @param healthyAnim Animation for healthy state (obtained from ResourceManager)
+     * @param damagedAnim Animation for damaged state (obtained from ResourceManager)
+     * @param criticalAnim Animation for critical state (obtained from ResourceManager)
+     */
     void SetupDamageStageAnimations(
-        const std::vector<std::string>& healthyFrames,
-        const std::vector<std::string>& damagedFrames,
-        const std::vector<std::string>& criticalFrames,
-        int frameInterval = 50);
+        std::shared_ptr<Util::Animation> healthyAnim,
+        std::shared_ptr<Util::Animation> damagedAnim,
+        std::shared_ptr<Util::Animation> criticalAnim);
 
 private:
     void UpdateDamageStage();

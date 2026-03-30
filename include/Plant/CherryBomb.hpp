@@ -15,6 +15,8 @@
  * Cherry Bomb has a 3x3 area of effect and kills all zombies in range.
  * After exploding, the plant is destroyed (health = 0).
  *
+ * Animations loaded via ResourceManager.
+ *
  * Stats:
  * - Damage: 1800 (instant kill for most zombies)
  * - Area: 3x3 cells
@@ -38,7 +40,10 @@ public:
     CherryBomb();
     virtual ~CherryBomb() = default;
 
-    // Initialize with animation frames
+    /**
+     * @brief Initialize animation via ResourceManager.
+     * @param frameDirectory Ignored - animation loaded from ResourceManager
+     */
     void Initialize(const std::string& frameDirectory);
 
     // Set callback for when explosion occurs
@@ -51,8 +56,6 @@ protected:
     void OnTrigger() override;
 
 private:
-    static std::vector<std::string> GetAnimationFrames(const std::string& frameDir);
-
     ExplosionCallback m_OnExplosion;
 };
 

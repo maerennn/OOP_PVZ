@@ -26,6 +26,9 @@ set(SRC_FILES
     # Zombie System
     Zombie.cpp
     NormalZombie.cpp
+    ConeheadZombie.cpp
+    BucketheadZombie.cpp
+    PoleVaultZombie.cpp
 
     # GUI System
     GUI/SeedPacket.cpp
@@ -67,6 +70,9 @@ set(INCLUDE_FILES
     # Zombie System
     Zombie.hpp
     NormalZombie.hpp
+    ConeheadZombie.hpp
+    BucketheadZombie.hpp
+    PoleVaultZombie.hpp
 
     # GUI System
     GUI/SeedPacket.hpp

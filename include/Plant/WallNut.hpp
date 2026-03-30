@@ -14,6 +14,8 @@
  * Wall-nut does NOT implement IAttacker or IProducer.
  * Its purpose is solely to block zombies with its high HP.
  *
+ * Animations loaded via ResourceManager.
+ *
  * Stats:
  * - Health: 4000 (very high)
  * - Sun Cost: 50
@@ -35,23 +37,15 @@ public:
     WallNut();
     virtual ~WallNut() = default;
 
-    // Initialize with animation frames for all damage stages
+    /**
+     * @brief Initialize animations via ResourceManager.
+     * @param frameDirectory Ignored - animations loaded from ResourceManager
+     */
     void Initialize(const std::string& frameDirectory);
-
-    // Alternative: Initialize with separate frame directories for each stage
-    void Initialize(const std::string& healthyFrameDir,
-                    const std::string& damagedFrameDir,
-                    const std::string& criticalFrameDir);
 
 protected:
     // Override to customize visual transition effects
     void OnDamageStageChanged(DamageStage newStage) override;
-
-private:
-    static std::vector<std::string> GetAnimationFrames(
-        const std::string& frameDir,
-        const std::string& prefix,
-        int frameCount);
 };
 
 #endif // WALLNUT_HPP

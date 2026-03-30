@@ -78,6 +78,19 @@ public:
     static constexpr const char* ZOMBIE_BASIC_ATTACKING = "zombie.basic.attacking";
     static constexpr const char* ZOMBIE_BASIC_STANDING = "zombie.basic.standing";
     static constexpr const char* ZOMBIE_BASIC_DYING = "zombie.basic.dying";
+    
+    static constexpr const char* ZOMBIE_CONEHEAD_WALKING = "zombie.conehead.walking";
+    static constexpr const char* ZOMBIE_CONEHEAD_ATTACKING = "zombie.conehead.attacking";
+    static constexpr const char* ZOMBIE_CONEHEAD_DYING = "zombie.conehead.dying";
+    
+    static constexpr const char* ZOMBIE_BUCKETHEAD_WALKING = "zombie.buckethead.walking";
+    static constexpr const char* ZOMBIE_BUCKETHEAD_ATTACKING = "zombie.buckethead.attacking";
+    static constexpr const char* ZOMBIE_BUCKETHEAD_DYING = "zombie.buckethead.dying";
+    
+    static constexpr const char* ZOMBIE_POLEVAULT_WALKING = "zombie.polevault.walking";
+    static constexpr const char* ZOMBIE_POLEVAULT_ATTACKING = "zombie.polevault.attacking";
+    static constexpr const char* ZOMBIE_POLEVAULT_DYING = "zombie.polevault.dying";
+    static constexpr const char* ZOMBIE_POLEVAULT_JUMP = "zombie.polevault.jump";
 
     // Plant animations
     static constexpr const char* PLANT_SUNFLOWER_IDLE = "plant.sunflower.idle";
