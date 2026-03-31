@@ -24,11 +24,14 @@ set(SRC_FILES
     ResourceManager.cpp
 
     # Zombie System
-    Zombie.cpp
-    NormalZombie.cpp
-    ConeheadZombie.cpp
-    BucketheadZombie.cpp
-    PoleVaultZombie.cpp
+    Zombie/Zombie.cpp
+    Zombie/NormalZombie.cpp
+    Zombie/ConeheadZombie.cpp
+    Zombie/BucketheadZombie.cpp
+    Zombie/PoleVaultZombie.cpp
+
+    # Lawnmower System
+    Lawnmower.cpp
 
     # GUI System
     GUI/SeedPacket.cpp
@@ -68,11 +71,14 @@ set(INCLUDE_FILES
     ResourceManager.hpp
 
     # Zombie System
-    Zombie.hpp
-    NormalZombie.hpp
-    ConeheadZombie.hpp
-    BucketheadZombie.hpp
-    PoleVaultZombie.hpp
+    Zombie/Zombie.hpp
+    Zombie/NormalZombie.hpp
+    Zombie/ConeheadZombie.hpp
+    Zombie/BucketheadZombie.hpp
+    Zombie/PoleVaultZombie.hpp
+
+    # Lawnmower System
+    Lawnmower.hpp
 
     # GUI System
     GUI/SeedPacket.hpp

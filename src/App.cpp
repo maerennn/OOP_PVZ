@@ -7,11 +7,13 @@
 #include "ResourceManager.hpp"
 #include "Sun.hpp"
 #include "Pea.hpp"
-#include "NormalZombie.hpp"
+#include "Zombie/NormalZombie.hpp"
 #include "Plant/Sunflower.hpp"
 #include "Plant/ShooterPlant.hpp"
+#include "Plant/CherryBomb.hpp"
 #include <algorithm>
 #include <random>
+#include <cmath>
 
 void App::Start() {
     LOG_TRACE("Start");
@@ -85,6 +87,9 @@ void App::Start() {
         }
     );
 
+    // ── Initialize Lawnmowers ────────────────────────────────────────────
+    SpawnLawnmowers();
+
     m_CurrentState = State::UPDATE;
 }
 
@@ -108,6 +113,10 @@ void App::Update() {
     // ── Handle Planting Input and State ─────────────────────────────────
     m_PlantingSystem->HandleInput();
     m_PlantingSystem->Update(deltaTime);
+
+    // ── Update Lawnmower System ─────────────────────────────────────────
+    UpdateLawnmowers(deltaTime);
+    CheckLawnmowerCollisions();
 
     // ── Update Zombie System ────────────────────────────────────────────
     UpdateZombies(deltaTime);
@@ -183,7 +192,8 @@ void App::PlacePlant(PlantType type, int row, int col) {
                 [this](int amount, glm::vec2 position) {
                     // Offset sun spawn slightly above the plant
                     glm::vec2 sunPos = position + glm::vec2(0.0f, 30.0f);
-                    SpawnSun(amount, sunPos);
+                    // Sunflower suns don't fall - targetY = starting Y
+                    SpawnSun(amount, sunPos, sunPos.y);
                 }
             );
         }
@@ -197,6 +207,18 @@ void App::PlacePlant(PlantType type, int row, int col) {
                 SpawnProjectile(ptype, damage, prow, pos);
             }
         );
+    }
+
+    // ── Wire up CherryBomb explosion callback ───────────────────────────
+    if (type == PlantType::CHERRYBOMB) {
+        auto cherryBomb = std::dynamic_pointer_cast<CherryBomb>(plant);
+        if (cherryBomb) {
+            cherryBomb->SetExplosionCallback(
+                [this, row, col](glm::vec2 position, float radius, int damage) {
+                    HandleCherryBombExplosion(row, col, damage);
+                }
+            );
+        }
     }
 
     // Add to scene and grid
@@ -219,8 +241,8 @@ bool App::IsCellOccupied(int row, int col) const {
 // Sun System Implementation
 // ══════════════════════════════════════════════════════════════════════════
 
-void App::SpawnSun(int value, const glm::vec2& position) {
-    auto sun = std::make_shared<Sun>(position, value);
+void App::SpawnSun(int value, const glm::vec2& position, float targetY) {
+    auto sun = std::make_shared<Sun>(position, targetY, value);
     sun->Initialize();
 
     // Set callback to add sun to manager when collected
@@ -232,7 +254,7 @@ void App::SpawnSun(int value, const glm::vec2& position) {
     m_Root.AddChild(sun);
     m_Suns.push_back(sun);
 
-    LOG_DEBUG("Spawned sun at ({}, {})", position.x, position.y);
+    LOG_DEBUG("Spawned sun at ({}, {}) -> target Y: {}", position.x, position.y, targetY);
 }
 
 void App::UpdateSuns(float deltaTime) {
@@ -266,15 +288,19 @@ void App::UpdateSuns(float deltaTime) {
             GameConfig::GRID_RIGHT - 50.0f
         );
 
-        // Random Y position in the upper lawn area
+        // Random target Y position in the lawn area (where sun will stop falling)
         std::uniform_real_distribution<float> yDist(
-            GameConfig::LaneCenterY(2),  // Middle lane
-            GameConfig::LaneCenterY(0)   // Top lane
+            GameConfig::LaneCenterY(3),  // Lower-middle lane
+            GameConfig::LaneCenterY(1)   // Upper-middle lane
         );
 
-        glm::vec2 skyDropPos = {xDist(gen), yDist(gen)};
-        SpawnSun(Sun::SUN_VALUE, skyDropPos);
-        LOG_DEBUG("Sky drop sun at ({}, {})", skyDropPos.x, skyDropPos.y);
+        float targetY = yDist(gen);
+        // Spawn at top of screen (above visible area in PTSD coordinates)
+        constexpr float SKY_SPAWN_Y = 400.0f;  // Above top edge (360)
+        glm::vec2 spawnPos = {xDist(gen), SKY_SPAWN_Y};
+
+        SpawnSun(Sun::SUN_VALUE, spawnPos, targetY);
+        LOG_DEBUG("Sky drop sun spawned at Y={}, falling to Y={}", SKY_SPAWN_Y, targetY);
     }
 }
 
@@ -505,7 +531,12 @@ void App::CheckGameOver() {
     // ═══════════════════════════════════════════════════════════════════════
     
     for (const auto& zombie : m_Zombies) {
-        if (zombie->GetState() == Zombie::State::DEAD) continue;
+        // Skip dead, dying, or charred zombies (they can't eat brains)
+        if (zombie->GetState() == Zombie::State::DEAD ||
+            zombie->GetState() == Zombie::State::DYING ||
+            zombie->GetState() == Zombie::State::CHARRED) {
+            continue;
+        }
         
         float zombieX = zombie->GetTransform().translation.x;
         if (zombieX < GameConfig::HOUSE_X) {
@@ -517,4 +548,129 @@ void App::CheckGameOver() {
             return;
         }
     }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Lawnmower System Implementation
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::SpawnLawnmowers() {
+    m_Lawnmowers.clear();
+
+    for (int row = 0; row < GameConfig::GRID_ROWS; ++row) {
+        // Position at left edge of lawn (mower zone)
+        float x = GameConfig::MOWER_ZONE_RIGHT - 30.0f;  // Slightly inside the zone
+        float y = GameConfig::LaneCenterY(row);
+
+        auto mower = std::make_shared<Lawnmower>(row, glm::vec2{x, y});
+        mower->Initialize();
+
+        m_Root.AddChild(mower);
+        m_Lawnmowers.push_back(mower);
+
+        LOG_DEBUG("Spawned lawnmower at row {} position ({}, {})", row, x, y);
+    }
+}
+
+void App::UpdateLawnmowers(float deltaTime) {
+    // Update all lawnmowers
+    for (auto& mower : m_Lawnmowers) {
+        mower->Update(deltaTime);
+    }
+
+    // Remove off-screen lawnmowers (safe erase)
+    auto it = std::remove_if(m_Lawnmowers.begin(), m_Lawnmowers.end(),
+        [this](const std::shared_ptr<Lawnmower>& mower) {
+            if (mower->ShouldRemove()) {
+                LOG_DEBUG("Removing off-screen lawnmower from row {}", mower->GetRow());
+                m_Root.RemoveChild(mower);
+                return true;
+            }
+            return false;
+        });
+    m_Lawnmowers.erase(it, m_Lawnmowers.end());
+}
+
+void App::CheckLawnmowerCollisions() {
+    for (auto& mower : m_Lawnmowers) {
+        int mowerRow = mower->GetRow();
+        float mowerX = mower->GetTransform().translation.x;
+
+        for (auto& zombie : m_Zombies) {
+            // Skip dead/dying/charred zombies
+            if (zombie->GetState() == Zombie::State::DEAD ||
+                zombie->GetState() == Zombie::State::DYING ||
+                zombie->GetState() == Zombie::State::CHARRED) {
+                continue;
+            }
+
+            // Only check zombies in the same row
+            if (zombie->GetRow() != mowerRow) {
+                continue;
+            }
+
+            float zombieX = zombie->GetTransform().translation.x;
+
+            // Check collision
+            float distance = std::abs(zombieX - mowerX);
+            if (distance < 50.0f) {  // Collision threshold
+                if (mower->IsIdle()) {
+                    // Zombie triggered the mower!
+                    mower->Trigger();
+                    LOG_DEBUG("Zombie triggered lawnmower in row {}!", mowerRow);
+                }
+
+                if (mower->IsTriggered()) {
+                    // Mower instantly kills the zombie
+                    zombie->TakeDamage(9999);
+                    LOG_DEBUG("Lawnmower destroyed zombie in row {}!", mowerRow);
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Explosion System Implementation (CherryBomb)
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::HandleCherryBombExplosion(int centerRow, int centerCol, int damage) {
+    LOG_DEBUG("CherryBomb EXPLOSION at row {}, col {} with {} damage!", 
+              centerRow, centerCol, damage);
+
+    // Calculate the world position of the cherry bomb
+    glm::vec2 centerPos = GameConfig::CellToPosition(centerRow, centerCol);
+
+    // 3x3 grid area: check rows [centerRow-1, centerRow+1]
+    //                       cols [centerCol-1, centerCol+1]
+    // But for zombies, we calculate using world position + cell dimensions
+
+    float explosionRadiusX = GameConfig::CELL_WIDTH * 1.5f;   // ~1.5 cells horizontally
+    float explosionRadiusY = GameConfig::CELL_HEIGHT * 1.5f;  // ~1.5 cells vertically
+
+    int zombiesKilled = 0;
+
+    for (auto& zombie : m_Zombies) {
+        // Skip already dead/dying zombies
+        if (zombie->GetState() == Zombie::State::DEAD ||
+            zombie->GetState() == Zombie::State::DYING ||
+            zombie->GetState() == Zombie::State::CHARRED) {
+            continue;
+        }
+
+        glm::vec2 zombiePos = zombie->GetTransform().translation;
+
+        // Check if zombie is within 3x3 area (using Manhattan-style box collision)
+        float dx = std::abs(zombiePos.x - centerPos.x);
+        float dy = std::abs(zombiePos.y - centerPos.y);
+
+        if (dx <= explosionRadiusX && dy <= explosionRadiusY) {
+            // Zombie is in blast radius! Apply explosion damage
+            zombie->TakeExplosionDamage(damage);
+            zombiesKilled++;
+            LOG_DEBUG("  - {} caught in explosion!", zombie->GetName());
+        }
+    }
+
+    LOG_DEBUG("CherryBomb killed {} zombies in explosion!", zombiesKilled);
 }

@@ -155,6 +155,17 @@ void ResourceManager::Initialize() {
         false
     );
 
+    // ── Shared Zombie Animations ────────────────────────────────────────────
+    // Charred zombie (burnt by Cherry Bomb) - frames 1-38, non-looping
+    RegisterAnimation(
+        ZOMBIE_CHARRED,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/CharredZombie/CharredZombie%04d.png",
+            1, 38),
+        50,
+        false  // plays once then stops
+    );
+
     // ══════════════════════════════════════════════════════════════════════
     // PLANT ANIMATIONS
     // ══════════════════════════════════════════════════════════════════════
@@ -230,6 +241,16 @@ void ResourceManager::Initialize() {
             RESOURCE_DIR "/Sun-20260312T155248Z-3-001/Sun/Sun%04d.png",
             1, 13),
         50,
+        true
+    );
+
+    // Lawnmower - Idle/Running animation (frames 1-9)
+    RegisterAnimation(
+        LAWNMOWER_IDLE,
+        GenerateFramePaths(
+            RESOURCE_DIR "/Lawnmower/Lawnmower%04d.png",
+            1, 9),
+        80,
         true
     );
 

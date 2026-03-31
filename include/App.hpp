@@ -15,7 +15,8 @@
 #include "GUI/GhostPlant.hpp"
 #include "Sun.hpp"
 #include "Projectile.hpp"
-#include "Zombie.hpp"
+#include "Zombie/Zombie.hpp"
+#include "Lawnmower.hpp"
 #include <memory>
 #include <vector>
 
@@ -38,7 +39,7 @@ private:
     bool IsCellOccupied(int row, int col) const;
 
     // Sun system methods
-    void SpawnSun(int value, const glm::vec2& position);
+    void SpawnSun(int value, const glm::vec2& position, float targetY);
     void UpdateSuns(float deltaTime);
     void CheckSunCollection();
 
@@ -52,6 +53,14 @@ private:
     void UpdateZombies(float deltaTime);
     void CheckZombiePlantCollisions();
     void RemoveDeadPlants();
+
+    // Lawnmower system methods
+    void SpawnLawnmowers();
+    void UpdateLawnmowers(float deltaTime);
+    void CheckLawnmowerCollisions();
+
+    // Explosion system methods
+    void HandleCherryBombExplosion(int centerRow, int centerCol, int damage);
 
     State m_CurrentState = State::START;
 
@@ -82,6 +91,9 @@ private:
     std::vector<std::shared_ptr<Zombie>> m_Zombies;
     float m_ZombieSpawnTimer = 0.0f;
     static constexpr float ZOMBIE_SPAWN_INTERVAL = 8.0f;  // Seconds between spawns (for testing)
+
+    // Lawnmower system
+    std::vector<std::shared_ptr<Lawnmower>> m_Lawnmowers;
 
     // Game state
     bool m_GameOver = false;

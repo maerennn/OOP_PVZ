@@ -92,6 +92,9 @@ public:
     static constexpr const char* ZOMBIE_POLEVAULT_DYING = "zombie.polevault.dying";
     static constexpr const char* ZOMBIE_POLEVAULT_JUMP = "zombie.polevault.jump";
 
+    // Shared zombie animations
+    static constexpr const char* ZOMBIE_CHARRED = "zombie.charred";  // Burnt by Cherry Bomb
+
     // Plant animations
     static constexpr const char* PLANT_SUNFLOWER_IDLE = "plant.sunflower.idle";
     static constexpr const char* PLANT_PEASHOOTER_IDLE = "plant.peashooter.idle";
@@ -102,6 +105,7 @@ public:
 
     // Other game objects
     static constexpr const char* SUN_FLOATING = "sun.floating";
+    static constexpr const char* LAWNMOWER_IDLE = "lawnmower.idle";
 
 private:
     ResourceManager() = default;

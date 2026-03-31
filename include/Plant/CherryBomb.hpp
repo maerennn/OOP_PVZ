@@ -2,7 +2,9 @@
 #define CHERRYBOMB_HPP
 
 #include "Plant/InstantKillPlant.hpp"
+#include "Util/Animation.hpp"
 #include <functional>
+#include <memory>
 
 /**
  * @file CherryBomb.hpp
@@ -14,6 +16,13 @@
  *
  * Cherry Bomb has a 3x3 area of effect and kills all zombies in range.
  * After exploding, the plant is destroyed (health = 0).
+ *
+ * Explosion Behavior:
+ * 1. Plays fuse/countdown animation (~1.2 seconds)
+ * 2. When animation ends, triggers explosion
+ * 3. Applies 1800 damage to all zombies in 3x3 grid area
+ * 4. Zombies killed by explosion use charred death animation
+ * 5. Cherry Bomb destroys itself (health = 0)
  *
  * Animations loaded via ResourceManager.
  *
@@ -46,6 +55,12 @@ public:
      */
     void Initialize(const std::string& frameDirectory);
 
+    /**
+     * @brief Update fuse timer and check for animation completion.
+     * @param deltaTime Time since last frame
+     */
+    void Update(float deltaTime) override;
+
     // Set callback for when explosion occurs
     void SetExplosionCallback(ExplosionCallback callback) {
         m_OnExplosion = std::move(callback);
@@ -56,7 +71,15 @@ protected:
     void OnTrigger() override;
 
 private:
+    /**
+     * @brief Trigger the explosion, damage zombies, and destroy self.
+     */
+    void Explode();
+
     ExplosionCallback m_OnExplosion;
+    std::shared_ptr<Util::Animation> m_FuseAnimation;
+    bool m_HasExploded = false;
+    float m_FuseTimer = 0.0f;
 };
 
 #endif // CHERRYBOMB_HPP

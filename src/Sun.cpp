@@ -3,13 +3,20 @@
 #include "GameConfig.hpp"
 #include <cmath>
 
-Sun::Sun(const glm::vec2& position, int value)
+Sun::Sun(const glm::vec2& position, float targetY, int value)
     : m_Value(value)
     , m_Lifetime(SUN_LIFETIME)
     , m_BasePosition(position)
+    , m_TargetY(targetY)
 {
     m_Transform.translation = position;
     SetZIndex(GameConfig::ZIndex::SUN);
+
+    // If starting Y differs from target Y, this sun needs to fall
+    // In PTSD coordinate system, Y goes UP, so falling means decreasing Y
+    if (std::abs(position.y - targetY) > 1.0f) {
+        m_IsFalling = true;
+    }
 }
 
 void Sun::Initialize() {
@@ -27,6 +34,21 @@ void Sun::Update(float deltaTime) {
 
     // Decrease lifetime
     m_Lifetime -= deltaTime;
+
+    // Handle falling behavior (for sky drops)
+    if (m_IsFalling) {
+        // In PTSD, Y goes UP, so falling = decreasing Y toward m_TargetY
+        m_Transform.translation.y -= m_FallSpeed * deltaTime;
+
+        // Check if we've reached or passed the target
+        if (m_Transform.translation.y <= m_TargetY) {
+            m_Transform.translation.y = m_TargetY;
+            m_BasePosition.y = m_TargetY;
+            m_IsFalling = false;
+            m_HoverTime = 0.0f;  // Reset hover animation
+        }
+        return;  // Don't hover while falling
+    }
 
     // Hover animation (gentle up/down bobbing)
     m_HoverTime += deltaTime * HOVER_SPEED;
