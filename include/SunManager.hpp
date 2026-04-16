@@ -15,7 +15,7 @@ namespace Util {
  */
 class SunManager {
 public:
-    static constexpr int STARTING_SUN = 999;
+    static constexpr int STARTING_SUN = 50;
 
     SunManager();
     ~SunManager() = default;

@@ -26,25 +26,27 @@ void Zombie::Update(float deltaTime) {
             m_Transform.translation.x -= m_Speed * deltaTime;
             break;
 
-        case State::ATTACKING:
-            // Deal damage to target plant over time
-            if (m_TargetPlant && m_TargetPlant->IsAlive()) {
+        case State::ATTACKING: {
+            // Lock the weak_ptr — plant may have been removed by another system
+            auto target = m_TargetPlant.lock();
+            if (target && target->IsAlive()) {
                 int damageThisFrame = static_cast<int>(m_Damage * deltaTime);
                 if (damageThisFrame < 1) damageThisFrame = 1;  // Minimum 1 damage per frame
-                m_TargetPlant->TakeDamage(damageThisFrame);
+                target->TakeDamage(damageThisFrame);
 
                 // Check if plant died
-                if (!m_TargetPlant->IsAlive()) {
+                if (!target->IsAlive()) {
                     LOG_DEBUG("{} killed plant, resuming walk", m_Name);
                     ClearTargetPlant();
                     SetState(State::WALKING);
                 }
             } else {
-                // No target or target died - resume walking
+                // No target or target died/removed - resume walking
                 ClearTargetPlant();
                 SetState(State::WALKING);
             }
             break;
+        }
 
         case State::DYING:
             // Accumulate death timer

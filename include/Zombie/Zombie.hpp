@@ -123,9 +123,9 @@ public:
     bool ShouldRemove() const { return m_State == State::DEAD; }
 
     // Target plant for attacking (set by App collision system)
-    void SetTargetPlant(Plant* plant) { m_TargetPlant = plant; }
-    Plant* GetTargetPlant() const { return m_TargetPlant; }
-    void ClearTargetPlant() { m_TargetPlant = nullptr; }
+    void SetTargetPlant(std::shared_ptr<Plant> plant) { m_TargetPlant = plant; }
+    std::shared_ptr<Plant> GetTargetPlant() const { return m_TargetPlant.lock(); }
+    void ClearTargetPlant() { m_TargetPlant.reset(); }
 
     // Collision helpers
     float GetLeftEdge() const { return m_Transform.translation.x - HITBOX_WIDTH / 2; }
@@ -161,8 +161,8 @@ protected:
     State m_State = State::WALKING;
     DeathType m_DeathType = DeathType::NORMAL;
 
-    // Target plant (for attacking state)
-    Plant* m_TargetPlant = nullptr;
+    // Target plant (for attacking state) — weak_ptr avoids dangling if plant is removed
+    std::weak_ptr<Plant> m_TargetPlant;
 
     // Death timer (fallback if animation state detection fails)
     float m_DeathTimer = 0.0f;

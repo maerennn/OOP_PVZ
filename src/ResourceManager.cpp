@@ -1,5 +1,6 @@
 #include "ResourceManager.hpp"
 #include "config.hpp"
+#include "Util/Image.hpp"
 #include "Util/Logger.hpp"
 #include <cstdio>
 
@@ -270,9 +271,10 @@ std::shared_ptr<Util::Animation> ResourceManager::CreateAnimation(
 
     const AnimationData& data = it->second;
 
-    // Create a BRAND NEW Animation instance with the cached paths
+    // Create a NEW Animation instance from cached pre-built Image objects.
+    // Only shared_ptr copies occur here — no disk I/O, no GPU uploads.
     return std::make_shared<Util::Animation>(
-        data.framePaths,
+        data.frames,
         playImmediately,
         data.frameInterval,
         data.looping,
@@ -284,30 +286,25 @@ bool ResourceManager::HasAnimation(const std::string& animationName) const {
     return m_AnimationCache.find(animationName) != m_AnimationCache.end();
 }
 
-const std::vector<std::string>* ResourceManager::GetFramePaths(
-    const std::string& animationName) const
-{
-    auto it = m_AnimationCache.find(animationName);
-    if (it == m_AnimationCache.end()) {
-        return nullptr;
-    }
-    return &it->second.framePaths;
-}
-
 void ResourceManager::RegisterAnimation(const std::string& name,
-                                         std::vector<std::string> paths,
+                                         const std::vector<std::string>& paths,
                                          int frameInterval,
                                          bool looping)
 {
     AnimationData data;
-    data.framePaths = std::move(paths);
+    data.frames.reserve(paths.size());
+    // Build Image objects now (during Initialize) — SDL surface load + glTexImage2D
+    // happen here once, so they never run on the main game-loop thread at spawn time.
+    for (const auto& path : paths) {
+        data.frames.push_back(std::make_shared<Util::Image>(path));
+    }
     data.frameInterval = frameInterval;
     data.looping = looping;
 
     m_AnimationCache[name] = std::move(data);
 
     LOG_DEBUG("ResourceManager: Registered '{}' with {} frames",
-              name, m_AnimationCache[name].framePaths.size());
+              name, m_AnimationCache[name].frames.size());
 }
 
 std::vector<std::string> ResourceManager::GenerateFramePaths(

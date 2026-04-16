@@ -8,6 +8,9 @@
 #include "Sun.hpp"
 #include "Pea.hpp"
 #include "Zombie/NormalZombie.hpp"
+#include "Zombie/ConeheadZombie.hpp"
+#include "Zombie/BucketheadZombie.hpp"
+#include "Zombie/PoleVaultZombie.hpp"
 #include "Plant/Sunflower.hpp"
 #include "Plant/ShooterPlant.hpp"
 #include "Plant/CherryBomb.hpp"
@@ -90,6 +93,25 @@ void App::Start() {
     // ── Initialize Lawnmowers ────────────────────────────────────────────
     SpawnLawnmowers();
 
+    // ── Initialize Wave Manager ─────────────────────────────────────────
+    m_WaveManager = std::make_unique<WaveManager>();
+    m_WaveManager->SetSpawnCallback(
+        [this](ZombieType type, int lane) {
+            SpawnZombie(type, lane);
+        }
+    );
+    m_WaveManager->LoadLevel(WaveManager::CreateLevel1_4());
+
+    // ── Initialize Progress Bar ─────────────────────────────────────────
+    m_ProgressBar = std::make_unique<ProgressBar>();
+    m_ProgressBar->Initialize(
+        m_WaveManager->GetTotalWaves(),
+        m_WaveManager->GetFlagWaveIndices()
+    );
+    for (auto& obj : m_ProgressBar->GetAllObjects()) {
+        m_Root.AddChild(obj);
+    }
+
     m_CurrentState = State::UPDATE;
 }
 
@@ -119,7 +141,27 @@ void App::Update() {
     CheckLawnmowerCollisions();
 
     // ── Update Zombie System ────────────────────────────────────────────
+    // Grace period: after the first visible frame (loading is done), wait
+    // PREPARATION_DURATION seconds before allowing zombie spawns.
+    // The player can collect sun and plant during this window.
+    if (!m_FirstFrameRendered) {
+        // First frame — the scene just became visible. Start the clock
+        // on the *next* frame so frame 0 isn't counted.
+        m_FirstFrameRendered = true;
+    } else if (m_PreparationTimer < PREPARATION_DURATION) {
+        m_PreparationTimer += deltaTime;
+        // WaveManager is NOT updated — no zombies spawn yet.
+        // Progress bar stays at zero and hidden.
+    } else {
+        // Preparation complete — show progress bar and run wave system.
+        if (!m_ProgressBar->IsVisible()) {
+            m_ProgressBar->SetVisible(true);
+            LOG_DEBUG("Preparation phase complete — battle begins!");
+        }
+        m_WaveManager->Update(deltaTime);
+    }
     UpdateZombies(deltaTime);
+    m_ProgressBar->SetProgress(m_WaveManager->GetProgress());
     CheckGameOver();  // Check if zombie reached the house
     if (m_GameOver) return;  // Early exit if game just ended
 
@@ -424,8 +466,30 @@ void App::UpdateShooterTargets() {
 // Zombie System Implementation
 // ══════════════════════════════════════════════════════════════════════════
 
-void App::SpawnZombie(int row) {
-    auto zombie = std::make_shared<NormalZombie>();
+void App::SpawnZombie(ZombieType type, int lane) {
+    // Convert 1-based lane to 0-based row
+    int row = lane - 1;
+    if (row < 0 || row >= GameConfig::GRID_ROWS) {
+        LOG_ERROR("SpawnZombie: invalid lane {} (row {})", lane, row);
+        return;
+    }
+
+    std::shared_ptr<Zombie> zombie;
+    switch (type) {
+        case ZombieType::NORMAL:
+            zombie = std::make_shared<NormalZombie>();
+            break;
+        case ZombieType::CONEHEAD:
+            zombie = std::make_shared<ConeheadZombie>();
+            break;
+        case ZombieType::BUCKETHEAD:
+            zombie = std::make_shared<BucketheadZombie>();
+            break;
+        case ZombieType::POLEVAULT:
+            zombie = std::make_shared<PoleVaultZombie>();
+            break;
+    }
+
     zombie->Initialize();
     zombie->SetRow(row);
 
@@ -437,25 +501,11 @@ void App::SpawnZombie(int row) {
     m_Root.AddChild(zombie);
     m_Zombies.push_back(zombie);
 
-    LOG_DEBUG("Spawned NormalZombie at row {}, position ({}, {})", row, spawnX, spawnY);
+    LOG_DEBUG("Spawned {} at lane {} (row {}), position ({}, {})",
+              zombie->GetName(), lane, row, spawnX, spawnY);
 }
 
 void App::UpdateZombies(float deltaTime) {
-    // ── Spawn Timer (temporary wave system for testing) ─────────────────
-    m_ZombieSpawnTimer += deltaTime;
-
-    if (m_ZombieSpawnTimer >= ZOMBIE_SPAWN_INTERVAL) {
-        m_ZombieSpawnTimer = 0.0f;
-
-        // Spawn zombie in random row
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> rowDist(0, GameConfig::GRID_ROWS - 1);
-
-        int row = rowDist(gen);
-        SpawnZombie(row);
-    }
-
     // ── Update all zombies ──────────────────────────────────────────────
     for (auto& zombie : m_Zombies) {
         zombie->Update(deltaTime);
@@ -466,6 +516,7 @@ void App::UpdateZombies(float deltaTime) {
         [this](const std::shared_ptr<Zombie>& zombie) {
             if (zombie->ShouldRemove()) {
                 m_Root.RemoveChild(zombie);
+                m_WaveManager->OnZombieKilled();
                 return true;
             }
             return false;
@@ -495,10 +546,17 @@ void App::CheckZombiePlantCollisions() {
             float plantHalfWidth = 30.0f;  // Approximate plant hitbox half-width
             float plantRight = plantPos.x + plantHalfWidth;
 
-            // Check if zombie has reached this plant
+            // Guard: skip plants that are BEHIND the zombie.
+            // Zombies walk right→left (decreasing x), so any plant whose center
+            // is to the RIGHT of the zombie's center has already been walked past.
+            // Without this check, a plant placed behind a zombie satisfies
+            // `zombieLeft <= plantRight` trivially and causes an instant attack.
+            if (plantPos.x > zombie->m_Transform.translation.x) continue;
+
+            // Check if zombie has reached this plant from the right side
             if (zombieLeft <= plantRight) {
                 // Zombie reached plant - switch to ATTACKING
-                zombie->SetTargetPlant(plant.get());
+                zombie->SetTargetPlant(plant);
                 zombie->SetState(Zombie::State::ATTACKING);
                 LOG_DEBUG("Zombie {} attacking plant at row {} col {}",
                           zombie->GetName(), row, col);
@@ -540,9 +598,6 @@ void App::CheckGameOver() {
         
         float zombieX = zombie->GetTransform().translation.x;
         if (zombieX < GameConfig::HOUSE_X) {
-            LOG_ERROR("═══════════════════════════════════════════════");
-            LOG_ERROR("           GAME OVER - Zombies ate your brains!");
-            LOG_ERROR("═══════════════════════════════════════════════");
             m_GameOver = true;
             m_CurrentState = State::END;
             return;

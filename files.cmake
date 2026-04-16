@@ -22,6 +22,7 @@ set(SRC_FILES
     Projectile.cpp
     Pea.cpp
     ResourceManager.cpp
+    WaveManager.cpp
 
     # Zombie System
     Zombie/Zombie.cpp
@@ -38,6 +39,7 @@ set(SRC_FILES
     GUI/SeedBank.cpp
     GUI/CursorItem.cpp
     GUI/GhostPlant.cpp
+    GUI/ProgressBar.cpp
 )
 
 set(INCLUDE_FILES
@@ -69,6 +71,8 @@ set(INCLUDE_FILES
     Projectile.hpp
     Pea.hpp
     ResourceManager.hpp
+    ZombieType.hpp
+    WaveManager.hpp
 
     # Zombie System
     Zombie/Zombie.hpp
@@ -85,6 +89,7 @@ set(INCLUDE_FILES
     GUI/SeedBank.hpp
     GUI/CursorItem.hpp
     GUI/GhostPlant.hpp
+    GUI/ProgressBar.hpp
 )
 
 set(TEST_FILES

@@ -17,6 +17,8 @@
 #include "Projectile.hpp"
 #include "Zombie/Zombie.hpp"
 #include "Lawnmower.hpp"
+#include "WaveManager.hpp"
+#include "GUI/ProgressBar.hpp"
 #include <memory>
 #include <vector>
 
@@ -49,7 +51,7 @@ private:
     void UpdateShooterTargets();
 
     // Zombie system methods
-    void SpawnZombie(int row);
+    void SpawnZombie(ZombieType type, int lane);
     void UpdateZombies(float deltaTime);
     void CheckZombiePlantCollisions();
     void RemoveDeadPlants();
@@ -89,8 +91,10 @@ private:
 
     // Zombie system
     std::vector<std::shared_ptr<Zombie>> m_Zombies;
-    float m_ZombieSpawnTimer = 0.0f;
-    static constexpr float ZOMBIE_SPAWN_INTERVAL = 8.0f;  // Seconds between spawns (for testing)
+
+    // Wave system
+    std::unique_ptr<WaveManager> m_WaveManager;
+    std::unique_ptr<ProgressBar> m_ProgressBar;
 
     // Lawnmower system
     std::vector<std::shared_ptr<Lawnmower>> m_Lawnmowers;
@@ -98,6 +102,12 @@ private:
     // Game state
     bool m_GameOver = false;
     void CheckGameOver();
+
+    // Grace period: 20s after first visible frame before zombies spawn.
+    // Ensures the blank loading screen is gone and the player can prepare.
+    bool m_FirstFrameRendered = false;
+    float m_PreparationTimer = 0.0f;
+    static constexpr float PREPARATION_DURATION = 20.0f;
 };
 
 #endif
