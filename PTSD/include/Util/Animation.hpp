@@ -39,24 +39,8 @@ public:
               std::size_t interval, bool looping = true,
               std::size_t cooldown = 100);
 
-    /**
-     * @brief Constructor that accepts pre-built Image objects.
-     *
-     * Use this overload when Image objects have already been loaded (e.g. from
-     * ResourceManager). The shared_ptr frames are copied by reference so no
-     * GPU texture uploads occur at construction time — the freeze on zombie
-     * spawn is eliminated.
-     *
-     * @param frames Pre-loaded Image objects shared across Animation instances.
-     * @param play Whether the animation should play right away.
-     * @param interval Interval between frames in milliseconds.
-     * @param looping Whether the animation should loop.
-     * @param cooldown Cooldown time in milliseconds before the animation can
-     * restart.
-     */
     Animation(const std::vector<std::shared_ptr<Util::Image>> &frames, bool play,
-              std::size_t interval, bool looping = true,
-              std::size_t cooldown = 100);
+              std::size_t interval, bool looping, std::size_t cooldown = 0);
 
     /**
      * @brief Get the interval between frames.

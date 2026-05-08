@@ -19,6 +19,10 @@ This is a [PTSD](https://github.com/ntut-open-source-club/practical-tools-for-si
   > Please build your project in `Debug` because our `Release` path is broken D:
    
    ```sh
-   cmake --build build -config Debug # -G Ninja
+   cmake --build build --config Debug # -G Ninja
+   ```
+   > vscode use this first
+   ```sh
+   cmake "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" -DCMAKE_BUILD_TYPE=Debug -S . -B build
    ```
    better read [PTSD README](https://github.com/ntut-open-source-club/practical-tools-for-simple-design)

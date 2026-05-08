@@ -22,9 +22,9 @@ public:
 
     /**
      * @brief Initialize UI components.
-     * Must be called before using the manager.
+     * @param startingSun  Sun amount the player begins with (default: STARTING_SUN).
      */
-    void Initialize();
+    void Initialize(int startingSun = STARTING_SUN);
 
     /**
      * @brief Update sun display (called each frame).

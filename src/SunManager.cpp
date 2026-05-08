@@ -13,7 +13,8 @@ SunManager::SunManager()
 {
 }
 
-void SunManager::Initialize() {
+void SunManager::Initialize(int startingSun) {
+    m_CurrentSun = startingSun;
     // Create root container
     m_Root = std::make_shared<Util::GameObject>();
     m_Root->SetZIndex(GameConfig::ZIndex::SEED_BANK);

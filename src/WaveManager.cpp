@@ -139,109 +139,16 @@ int WaveManager::ResolveLane(int lane) {
     if (lane >= 1 && lane <= 5) {
         return lane;
     }
-    // Random lane 1-5
+    // lane == 0: pick a random lane from the active set
+    if (!m_ActiveLanes.empty()) {
+        std::uniform_int_distribution<int> dist(
+            0, static_cast<int>(m_ActiveLanes.size()) - 1);
+        return m_ActiveLanes[dist(m_Rng)];
+    }
+    // Fallback when no active-lane list is set
     std::uniform_int_distribution<int> dist(1, 5);
     return dist(m_Rng);
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// Level 1-4 Data
-// ══════════════════════════════════════════════════════════════════════════
-
-LevelData WaveManager::CreateLevel1_4() {
-    LevelData level;
-    using Z = ZombieType;
-
-    // Wave 1: 1 Normal, center lane
-    level.waves.push_back({{
-        {Z::NORMAL, 3, 0.0f}
-    }, false});
-
-    // Wave 2: 2 Normal, lanes 2 & 4
-    level.waves.push_back({{
-        {Z::NORMAL, 2, 0.0f},
-        {Z::NORMAL, 4, 5.0f}
-    }, false});
-
-    // Wave 3: 3 Normal, random, staggered
-    level.waves.push_back({{
-        {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 4.0f},
-        {Z::NORMAL, 0, 8.0f}
-    }, false});
-
-    // Wave 4: 3 Normal, forced top/middle/bottom
-    level.waves.push_back({{
-        {Z::NORMAL, 1, 0.0f},
-        {Z::NORMAL, 3, 3.0f},
-        {Z::NORMAL, 5, 6.0f}
-    }, false});
-
-    // Wave 5: 4 Normal, random, staggered
-    level.waves.push_back({{
-        {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 3.0f},
-        {Z::NORMAL, 0, 6.0f},
-        {Z::NORMAL, 0, 9.0f}
-    }, false});
-
-    // Wave 6: 4 Normal, mixed forced + random
-    level.waves.push_back({{
-        {Z::NORMAL, 2, 0.0f},
-        {Z::NORMAL, 4, 2.0f},
-        {Z::NORMAL, 0, 5.0f},
-        {Z::NORMAL, 0, 8.0f}
-    }, false});
-
-    // Wave 7: 5 Normal, one per lane
-    level.waves.push_back({{
-        {Z::NORMAL, 1, 0.0f},
-        {Z::NORMAL, 2, 2.0f},
-        {Z::NORMAL, 3, 4.0f},
-        {Z::NORMAL, 4, 6.0f},
-        {Z::NORMAL, 5, 8.0f}
-    }, false});
-
-    // Wave 8: 5 Normal, faster pacing, random
-    level.waves.push_back({{
-        {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 2.0f},
-        {Z::NORMAL, 0, 4.0f},
-        {Z::NORMAL, 0, 5.0f},
-        {Z::NORMAL, 0, 7.0f}
-    }, false});
-
-    // Wave 9: 6 Normal, dense random
-    level.waves.push_back({{
-        {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 2.0f},
-        {Z::NORMAL, 0, 3.0f},
-        {Z::NORMAL, 0, 5.0f},
-        {Z::NORMAL, 0, 6.0f},
-        {Z::NORMAL, 0, 8.0f}
-    }, false});
-
-    // Wave 10: 1 Conehead (center) + 3 Normal — Conehead debut
-    level.waves.push_back({{
-        {Z::CONEHEAD, 3, 0.0f},
-        {Z::NORMAL,   0, 0.0f},
-        {Z::NORMAL,   0, 3.0f},
-        {Z::NORMAL,   0, 6.0f}
-    }, false});
-
-    // Wave 11 (FLAG): 2 Conehead + 8 Normal — HUGE WAVE
-    level.waves.push_back({{
-        {Z::CONEHEAD, 2, 0.0f},
-        {Z::CONEHEAD, 4, 0.0f},
-        {Z::NORMAL,   0, 0.0f},
-        {Z::NORMAL,   0, 1.0f},
-        {Z::NORMAL,   0, 2.0f},
-        {Z::NORMAL,   0, 3.0f},
-        {Z::NORMAL,   0, 4.0f},
-        {Z::NORMAL,   0, 5.0f},
-        {Z::NORMAL,   0, 6.0f},
-        {Z::NORMAL,   0, 7.0f}
-    }, true});
-
-    return level;
-}
+// Level data is now defined in LevelManager.cpp.
+// WaveManager::CreateLevel1_4() has been removed — use LevelManager::CreateLevel().

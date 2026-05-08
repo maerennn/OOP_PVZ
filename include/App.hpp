@@ -19,12 +19,14 @@
 #include "Lawnmower.hpp"
 #include "WaveManager.hpp"
 #include "GUI/ProgressBar.hpp"
+#include "LevelManager.hpp"
 #include <memory>
 #include <vector>
 
 class App {
 public:
     enum class State {
+        LEVEL_SELECT,
         START,
         UPDATE,
         END,
@@ -32,6 +34,7 @@ public:
 
     State GetCurrentState() const { return m_CurrentState; }
 
+    void LevelSelect();
     void Start();
     void Update();
     void End();
@@ -64,7 +67,15 @@ private:
     // Explosion system methods
     void HandleCherryBombExplosion(int centerRow, int centerCol, int damage);
 
-    State m_CurrentState = State::START;
+    State m_CurrentState = State::LEVEL_SELECT;
+
+    // ── Level selection state ─────────────────────────────────────────
+    int  m_SelectedLevel           = 1;    ///< 1–4, set in LevelSelect()
+    bool m_LevelSelectInitialized  = false;
+    std::vector<std::shared_ptr<Util::GameObject>> m_LevelSelectObjects;
+
+    // ── Active lane list (set from LevelConfig) ───────────────────────
+    std::vector<int> m_ActiveLanes;
 
     Util::Renderer m_Root;
 

@@ -14,19 +14,16 @@ Animation::Animation(const std::vector<std::string> &paths, bool play,
         m_Frames.push_back(std::make_shared<Util::Image>(path));
     }
 }
-
-Animation::Animation(const std::vector<std::shared_ptr<Util::Image>> &frames,
-                     bool play, std::size_t interval, bool looping,
-                     std::size_t cooldown)
-    : m_State(play ? State::PLAY : State::PAUSE),
-      m_Interval(interval),
-      m_Looping(looping),
-      m_Cooldown(cooldown) {
-    // Shallow-copy the shared_ptrs — textures already live in VRAM,
-    // no IMG_Load or glTexImage2D calls happen here.
-    m_Frames = frames;
+    Animation::Animation(const std::vector<std::shared_ptr<Util::Image>> &frames, bool play,
+                         std::size_t interval, bool looping, std::size_t cooldown)
+        : m_Frames(frames),
+          m_State(play ? State::PLAY : State::PAUSE),
+          m_Interval(static_cast<double>(interval)),
+          m_Looping(looping),
+          m_Cooldown(cooldown),
+          m_Index(0),
+          m_TimeBetweenFrameUpdate(0) {
 }
-
 void Animation::SetCurrentFrame(std::size_t index) {
     m_Index = index;
     if (m_State == State::ENDED || m_State == State::COOLDOWN) {

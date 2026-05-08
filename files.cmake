@@ -1,5 +1,6 @@
 set(SRC_FILES
     App.cpp
+    main.cpp
     Util/ColorRect.cpp
 
     # Plant System
@@ -23,6 +24,7 @@ set(SRC_FILES
     Pea.cpp
     ResourceManager.cpp
     WaveManager.cpp
+    LevelManager.cpp
 
     # Zombie System
     Zombie/Zombie.cpp

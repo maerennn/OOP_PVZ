@@ -61,9 +61,14 @@ public:
     /** @brief Indices of flag waves (for progress bar marker placement). */
     const std::vector<int>& GetFlagWaveIndices() const { return m_FlagWaveIndices; }
 
-    // ── Level Data Factory ─────────────────────────────────────────────
+    /**
+     * @brief Set which 1-based lane numbers are active for random spawns.
+     *        Call this before LoadLevel(). Defaults to all 5 lanes when empty.
+     */
+    void SetActiveLanes(const std::vector<int>& lanes) { m_ActiveLanes = lanes; }
 
-    static LevelData CreateLevel1_4();
+    // ── Level Data is now owned by LevelManager ────────────────────────
+    // (CreateLevel1_4() has been removed – use LevelManager::CreateLevel())
 
 private:
     void StartNextWave();
@@ -88,6 +93,9 @@ private:
 
     // Precomputed flag-wave indices
     std::vector<int> m_FlagWaveIndices;
+
+    // Active lanes for random spawning (1-based). Empty = all 5 lanes.
+    std::vector<int> m_ActiveLanes;
 
     SpawnCallback m_OnSpawn;
     std::mt19937 m_Rng;

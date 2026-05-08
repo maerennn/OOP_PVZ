@@ -4,7 +4,10 @@
 #include "Util/Input.hpp"
 #include "Util/Keycode.hpp"
 #include "Util/Logger.hpp"
+#include "Util/Text.hpp"
+#include "Util/Color.hpp"
 #include "ResourceManager.hpp"
+#include "LevelManager.hpp"
 #include "Sun.hpp"
 #include "Pea.hpp"
 #include "Zombie/NormalZombie.hpp"
@@ -18,8 +21,106 @@
 #include <random>
 #include <cmath>
 
+// Font used by the level-select screen (same Inter.ttf bundled with PTSD)
+#define LEVEL_SELECT_FONT RESOURCE_DIR "/../PTSD/assets/fonts/Inter.ttf"
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Level Select Screen
+// ══════════════════════════════════════════════════════════════════════════════
+
+void App::LevelSelect() {
+    // ── One-time initialisation ─────────────────────────────────────────
+    if (!m_LevelSelectInitialized) {
+        // Helper that creates a Text GameObject, adds it to the renderer,
+        // and tracks it for later removal.
+        auto addText = [&](const std::string& text, int fontSize,
+                           glm::vec2 pos, Util::Color color, float zIndex) {
+            auto obj = std::make_shared<Util::GameObject>();
+            obj->SetDrawable(std::make_shared<Util::Text>(
+                LEVEL_SELECT_FONT, fontSize, text, color));
+            obj->m_Transform.translation = pos;
+            obj->SetZIndex(zIndex);
+            m_Root.AddChild(obj);
+            m_LevelSelectObjects.push_back(obj);
+        };
+
+        // Background (reuse the game lawn image)
+        auto bg = std::make_shared<Util::GameObject>();
+        bg->SetDrawable(std::make_shared<Util::Image>(
+            RESOURCE_DIR "/Background/background1.png"));
+        bg->SetZIndex(GameConfig::ZIndex::BACKGROUND);
+        bg->m_Transform.scale       = {1.18f, 1.18f};
+        bg->m_Transform.translation = {250.0f, -15.0f};
+        m_Root.AddChild(bg);
+        m_LevelSelectObjects.push_back(bg);
+
+        // Title
+        addText("Plants vs. Zombies",
+                48, {0.0f, 220.0f}, Util::Color(255, 220, 0, 255), 1.0f);
+
+        // Subtitle
+        addText("Select a Level:",
+                28, {0.0f, 130.0f}, Util::Color(255, 255, 255, 255), 1.0f);
+
+        // Level entries
+        addText("[1]  Level 1-1   1 lane    Tutorial",
+                24, {0.0f,  50.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+        addText("[2]  Level 1-2   3 lanes   Beginner",
+                24, {0.0f,  -5.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+        addText("[3]  Level 1-3   4 lanes   Intermediate",
+                24, {0.0f, -60.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+        addText("[4]  Level 1-4   5 lanes   Day 1",
+                24, {0.0f,-115.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+
+        // Instructions
+        addText("Press  1 / 2 / 3 / 4  to begin",
+                20, {0.0f,-210.0f}, Util::Color(180, 180, 180, 255), 1.0f);
+
+        m_LevelSelectInitialized = true;
+        LOG_DEBUG("LevelSelect: screen initialised");
+    }
+
+    // ── Input ───────────────────────────────────────────────────────────
+    if (Util::Input::IsKeyUp(Util::Keycode::NUM_1)) {
+        m_SelectedLevel = 1;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_2)) {
+        m_SelectedLevel = 2;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_3)) {
+        m_SelectedLevel = 3;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_4)) {
+        m_SelectedLevel = 4;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
+               Util::Input::IfExit()) {
+        m_CurrentState = State::END;
+    }
+
+    m_Root.Update();
+}
+
 void App::Start() {
     LOG_TRACE("Start");
+
+    // ── Remove level-select UI from renderer ────────────────────────────
+    for (auto& obj : m_LevelSelectObjects) {
+        m_Root.RemoveChild(obj);
+    }
+    m_LevelSelectObjects.clear();
+
+    // ── Reset per-run state ─────────────────────────────────────────────
+    m_GameOver           = false;
+    m_FirstFrameRendered = false;
+    m_PreparationTimer   = 0.0f;
+    m_SkyDropTimer       = 0.0f;
+
+    // ── Load level configuration ────────────────────────────────────────
+    auto config    = LevelManager::CreateLevel(m_SelectedLevel);
+    m_ActiveLanes  = config.activeLanes;
+    LOG_DEBUG("App::Start: Level {} selected, {} active lanes",
+              m_SelectedLevel, m_ActiveLanes.size());
 
     // ══════════════════════════════════════════════════════════════════════
     // Initialize ResourceManager FIRST - caches all animation paths
@@ -48,19 +149,14 @@ void App::Start() {
 
     // ── Initialize Sun Manager ──────────────────────────────────────────
     m_SunManager = std::make_unique<SunManager>();
-    m_SunManager->Initialize();
+    m_SunManager->Initialize(config.startingSun);
     for (auto& obj : m_SunManager->GetUIElements()) {
         m_Root.AddChild(obj);
     }
 
     // ── Initialize Seed Bank ────────────────────────────────────────────
     m_SeedBank = std::make_unique<SeedBank>();
-    m_SeedBank->Initialize({
-        PlantType::SUNFLOWER,
-        PlantType::PEASHOOTER,
-        PlantType::WALLNUT,
-        PlantType::CHERRYBOMB
-    });
+    m_SeedBank->Initialize(config.seedBank);
     for (auto& obj : m_SeedBank->GetAllObjects()) {
         m_Root.AddChild(obj);
     }
@@ -95,12 +191,13 @@ void App::Start() {
 
     // ── Initialize Wave Manager ─────────────────────────────────────────
     m_WaveManager = std::make_unique<WaveManager>();
+    m_WaveManager->SetActiveLanes(config.activeLanes);
     m_WaveManager->SetSpawnCallback(
         [this](ZombieType type, int lane) {
             SpawnZombie(type, lane);
         }
     );
-    m_WaveManager->LoadLevel(WaveManager::CreateLevel1_4());
+    m_WaveManager->LoadLevel(config.zombieWaves);
 
     // ── Initialize Progress Bar ─────────────────────────────────────────
     m_ProgressBar = std::make_unique<ProgressBar>();
@@ -612,9 +709,9 @@ void App::CheckGameOver() {
 void App::SpawnLawnmowers() {
     m_Lawnmowers.clear();
 
-    for (int row = 0; row < GameConfig::GRID_ROWS; ++row) {
-        // Position at left edge of lawn (mower zone)
-        float x = GameConfig::MOWER_ZONE_RIGHT - 30.0f;  // Slightly inside the zone
+    for (int lane : m_ActiveLanes) {
+        int row = lane - 1;  // 1-based lane → 0-based row
+        float x = GameConfig::MOWER_ZONE_RIGHT - 30.0f;
         float y = GameConfig::LaneCenterY(row);
 
         auto mower = std::make_shared<Lawnmower>(row, glm::vec2{x, y});
