@@ -14,6 +14,9 @@ set(SRC_FILES
     Plant/Sunflower.cpp
     Plant/WallNut.cpp
     Plant/CherryBomb.cpp
+    Plant/Repeater.cpp
+    Plant/SnowPea.cpp
+    Plant/PotatoMine.cpp
 
     # Game Systems
     PlantType.cpp
@@ -22,6 +25,7 @@ set(SRC_FILES
     Sun.cpp
     Projectile.cpp
     Pea.cpp
+    FrozenPea.cpp
     ResourceManager.cpp
     WaveManager.cpp
     LevelManager.cpp
@@ -64,6 +68,9 @@ set(INCLUDE_FILES
     Plant/Sunflower.hpp
     Plant/WallNut.hpp
     Plant/CherryBomb.hpp
+    Plant/Repeater.hpp
+    Plant/SnowPea.hpp
+    Plant/PotatoMine.hpp
 
     # Game Systems
     PlantType.hpp
@@ -72,6 +79,7 @@ set(INCLUDE_FILES
     Sun.hpp
     Projectile.hpp
     Pea.hpp
+    FrozenPea.hpp
     ResourceManager.hpp
     ZombieType.hpp
     WaveManager.hpp

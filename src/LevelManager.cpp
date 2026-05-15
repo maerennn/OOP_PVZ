@@ -6,6 +6,7 @@ LevelConfig LevelManager::CreateLevel(int levelNum) {
         case 2:  return CreateLevel1_2();
         case 3:  return CreateLevel1_3();
         case 4:  return CreateLevel1_4();
+        case 6:  return CreateLevel1_6();
         default: return CreateLevel1_4();
     }
 }
@@ -86,23 +87,25 @@ LevelConfig LevelManager::CreateLevel1_2() {
 // ══════════════════════════════════════════════════════════════════════════════
 LevelConfig LevelManager::CreateLevel1_3() {
     LevelConfig cfg;
-    cfg.activeLanes = {1, 2, 3, 4};
-    cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::PEASHOOTER,
-                       PlantType::WALLNUT};
-    cfg.startingSun = 50;
+    cfg.activeLanes = {2, 3, 4};
+    // cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::PEASHOOTER,
+    //                    PlantType::CHERRYBOMB};
+    cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::SNOWPEA, PlantType::REPEATER,
+                       PlantType::POTATOMINE};
+    cfg.startingSun = 999;
 
     using Z = ZombieType;
 
     // Wave 1: easy pair, random lanes
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 6.0f}
+        {Z::NORMAL, 0, 15.0f}
     }, false});
 
     // Wave 2: forced spread across 3 of the 4 active lanes
     cfg.zombieWaves.waves.push_back({{
-        {Z::NORMAL, 1, 0.0f},
-        {Z::NORMAL, 3, 4.0f},
+        {Z::NORMAL, 2, 0.0f},
+        {Z::NORMAL, 4, 4.0f},
         {Z::NORMAL, 0, 8.0f}
     }, false});
 
@@ -124,8 +127,8 @@ LevelConfig LevelManager::CreateLevel1_3() {
 
     // Wave 5 (flag): large wave to cap the level
     cfg.zombieWaves.waves.push_back({{
-        {Z::CONEHEAD, 1, 0.0f},
-        {Z::CONEHEAD, 4, 0.0f},
+        {Z::CONEHEAD, 2, 0.0f},
+        {Z::CONEHEAD, 3, 0.0f},
         {Z::NORMAL,   0, 0.0f},
         {Z::NORMAL,   0, 1.5f},
         {Z::NORMAL,   0, 3.0f},
@@ -241,6 +244,94 @@ LevelConfig LevelManager::CreateLevel1_4() {
         {Z::NORMAL,   0, 5.0f},
         {Z::NORMAL,   0, 6.0f},
         {Z::NORMAL,   0, 7.0f}
+    }, true});
+
+    return cfg;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Level 1-6  ─  Pole Vaulter Debut
+// ══════════════════════════════════════════════════════════════════════════════
+// All 5 lanes.  First appearance of the Pole Vaulting Zombie.
+// 10 waves with escalating threat, culminating in a flag wave that
+// introduces exactly one PoleVaultZombie.
+// ══════════════════════════════════════════════════════════════════════════════
+LevelConfig LevelManager::CreateLevel1_6() {
+    LevelConfig cfg;
+    cfg.activeLanes = {1, 2, 3, 4, 5};
+    cfg.seedBank    = {PlantType::PEASHOOTER,
+                       PlantType::SUNFLOWER,
+                       PlantType::CHERRYBOMB,
+                       PlantType::POTATOMINE,
+                       PlantType::WALLNUT};
+    cfg.startingSun = 1000;
+
+    using Z = ZombieType;
+
+    // Wave 1: 1 Normal
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+
+    // Wave 2: 1 Normal
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+
+    // Wave 3: 1 Normal
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+
+    // Wave 4: 2 threat points → 2 Normals (gentle multi-zombie intro)
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f},
+        {Z::NORMAL, 0, 4.0f}
+    }, false});
+
+    // Wave 5: 2 threat points → 1 Conehead (first random-lane Conehead)
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD, 0, 0.0f}
+    }, false});
+
+    // Wave 6: 1 Conehead (scripted, per authentic data)
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD, 0, 0.0f}
+    }, false});
+
+    // Wave 7: 1 Normal + 2 threat points → 3 Normals (volume pressure)
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f},
+        {Z::NORMAL, 0, 3.0f},
+        {Z::NORMAL, 0, 6.0f}
+    }, false});
+
+    // Wave 8: 1 Normal + 2 threat points → 1 Normal + 1 Conehead (mixed threat)
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,   0, 0.0f},
+        {Z::NORMAL,   0, 3.0f},
+        {Z::CONEHEAD, 0, 5.0f}
+    }, false});
+
+    // Wave 9: 1 Normal + 2 threat points → 3 Normals, tighter delays (urgency)
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f},
+        {Z::NORMAL, 0, 2.0f},
+        {Z::NORMAL, 0, 4.0f}
+    }, false});
+
+    // Wave 10 (FLAG): Conehead stand-in for Flag Zombie + 5 Normals + 1 Conehead
+    //                 + 1 PoleVaultZombie at delay 5.0f for dramatic first encounter
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD,  0,  0.0f},   // flag-bearer stand-in
+        {Z::NORMAL,    0,  0.0f},
+        {Z::NORMAL,    0,  1.5f},
+        {Z::NORMAL,    0,  3.0f},
+        {Z::NORMAL,    0,  4.5f},
+        {Z::NORMAL,    0,  6.0f},
+        {Z::NORMAL,    0,  7.5f},
+        {Z::CONEHEAD,  0,  2.0f},
+        {Z::POLEVAULT, 0,  5.0f}    // first PoleVaultZombie appearance
     }, true});
 
     return cfg;

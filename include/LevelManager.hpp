@@ -50,6 +50,7 @@ public:
     static LevelConfig CreateLevel1_2();  ///< Beginner:  3 lanes, +Sunflower
     static LevelConfig CreateLevel1_3();  ///< Intermediate: 4 lanes, +Wall-nut
     static LevelConfig CreateLevel1_4();  ///< Full day 1: 5 lanes, all plants
+    static LevelConfig CreateLevel1_6();  ///< Pole Vaulter debut: 5 lanes, 10 waves
 };
 
 #endif // LEVEL_MANAGER_HPP

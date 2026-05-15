@@ -127,6 +127,9 @@ inline float LaneCenterY(int row) {
     return GRID_ORIGIN_Y - row * CELL_HEIGHT - CELL_HEIGHT * 0.5f;
 }
 
+// ── Debug / Build Flags ────────────────────────────────────────────────────
+constexpr bool DEBUG_MODE = true;  // true → MAIN_MENU shows level-select; false → auto-loads Level 1-1
+
 // ── Gameplay Constants ──────────────────────────────────────────────────────
 constexpr float ZOMBIE_SPAWN_X = ZOMBIE_ZONE_RIGHT;  // zombies appear at right edge
 constexpr float HOUSE_X = MOWER_ZONE_RIGHT - 50.0f;  // Game over if zombie reaches this X
@@ -146,6 +149,7 @@ namespace SeedBank {
 // ── Z-Index Layers (higher = drawn on top) ──────────────────────────────────
 namespace ZIndex {
     constexpr float BACKGROUND  =  0.0f;
+    constexpr float SOD         =  0.5f;
     constexpr float GRID_LINES  =  1.0f;
     constexpr float LAWN_MOWER  =  2.0f;
     constexpr float PLANT       =  5.0f;

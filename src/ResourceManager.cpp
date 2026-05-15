@@ -231,6 +231,56 @@ void ResourceManager::Initialize() {
         false  // plays once then stops
     );
 
+    // Repeater - Idle (AccurateIdle folder, frames 1-25, matching Peashooter pattern)
+    RegisterAnimation(
+        PLANT_REPEATER_IDLE,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/Repeater/repeateridle%04d.png",
+            1, 25),
+        50,
+        true
+    );
+
+    // Snow Pea - Idle (AccurateIdle-style folder, frames 1-25)
+    RegisterAnimation(
+        PLANT_SNOWPEA_IDLE,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/SnowPea/SnowaccurateIdle/snowpeaaccurate%04d.png",
+            1, 25),
+        50,
+        true
+    );
+
+    // Potato Mine - Unarmed/dormant animation (frames 1-11, plant is underground)
+    RegisterAnimation(
+        PLANT_POTATOMINE_UNARMED,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/PotatoMine/Potatomine%04d.png",
+            1, 11),
+        80,
+        true
+    );
+
+    // Potato Mine - Arming transition (frames 12-17, plant rising up, play once)
+    RegisterAnimation(
+        PLANT_POTATOMINE_ARMING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/PotatoMine/Potatomine%04d.png",
+            12, 17),
+        80,
+        false
+    );
+
+    // Potato Mine - Armed animation (frames 18-31, fully armed idle, looping)
+    RegisterAnimation(
+        PLANT_POTATOMINE_ARMED,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/PotatoMine/Potatomine%04d.png",
+            18, 31),
+        80,
+        true
+    );
+
     // ══════════════════════════════════════════════════════════════════════
     // OTHER GAME OBJECTS
     // ══════════════════════════════════════════════════════════════════════

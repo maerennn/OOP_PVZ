@@ -23,5 +23,8 @@
 #include "Plant/Sunflower.hpp"
 #include "Plant/WallNut.hpp"
 #include "Plant/CherryBomb.hpp"
+#include "Plant/Repeater.hpp"
+#include "Plant/SnowPea.hpp"
+#include "Plant/PotatoMine.hpp"
 
 #endif // PLANTS_HPP

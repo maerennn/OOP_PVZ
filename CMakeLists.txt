@@ -5,6 +5,12 @@ project(PVZ_113590036)
 set(CMAKE_CXX_STANDARD 17)
 
 cmake_policy(SET CMP0135 NEW)
+cmake_policy(SET CMP0169 OLD)
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+
+if(MSVC)
+    add_compile_options(/FS)
+endif()
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
@@ -23,11 +29,13 @@ set(FETCHCONTENT_QUIET FALSE)
 
 #FetchContent_MakeAvailable(ptsd)
 add_subdirectory(PTSD)
+
 include(files.cmake)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 list(TRANSFORM SRC_FILES PREPEND ${SRC_DIR}/)
 list(TRANSFORM INCLUDE_FILES PREPEND ${INCLUDE_DIR}/)
+
 
 # file(GLOB_RECURSE SRC_FILES src/*)
 # file(GLOB_RECURSE HEADER_FILES include/*)
@@ -60,3 +68,4 @@ target_link_libraries(${PROJECT_NAME}
     SDL2::SDL2main
     PTSD
 )
+ 

@@ -10,6 +10,7 @@
 #include "LevelManager.hpp"
 #include "Sun.hpp"
 #include "Pea.hpp"
+#include "FrozenPea.hpp"
 #include "Zombie/NormalZombie.hpp"
 #include "Zombie/ConeheadZombie.hpp"
 #include "Zombie/BucketheadZombie.hpp"
@@ -17,12 +18,95 @@
 #include "Plant/Sunflower.hpp"
 #include "Plant/ShooterPlant.hpp"
 #include "Plant/CherryBomb.hpp"
+#include "Plant/PotatoMine.hpp"
 #include <algorithm>
 #include <random>
 #include <cmath>
 
 // Font used by the level-select screen (same Inter.ttf bundled with PTSD)
 #define LEVEL_SELECT_FONT RESOURCE_DIR "/../PTSD/assets/fonts/Inter.ttf"
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Boot — one-shot asset loader
+// ══════════════════════════════════════════════════════════════════════════════
+
+void App::Boot() {
+    LOG_TRACE("Boot: loading all assets");
+    ResourceManager::GetInstance().Initialize();
+    m_CurrentState = State::MAIN_MENU;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Main Menu Screen
+// ══════════════════════════════════════════════════════════════════════════════
+
+void App::MainMenu() {
+    // ── One-time initialisation ─────────────────────────────────────────
+    if (!m_MainMenuInitialized) {
+        // Background
+        auto bg = std::make_shared<Util::GameObject>();
+        bg->SetDrawable(std::make_shared<Util::Image>(
+            RESOURCE_DIR "/Background/menu.png"));
+        bg->SetZIndex(GameConfig::ZIndex::BACKGROUND);
+        bg->m_Transform.translation = {0.0f, 0.0f};
+        m_Root.AddChild(bg);
+        m_MainMenuObjects.push_back(bg);
+
+        // Adventure button — adjust buttonX / buttonY to taste
+        float buttonX = 330.0f;
+        float buttonY = 209.0f;
+
+        m_MenuAdventureBtn = std::make_shared<Util::GameObject>();
+        m_MenuAdventureBtn->SetDrawable(std::make_shared<Util::Image>(
+            RESOURCE_DIR "/Background/startAdventureB1.png"));
+        m_MenuAdventureBtn->m_Transform.scale = {2.0f, 2.0f};
+        m_MenuAdventureBtn->SetZIndex(1.0f);
+        m_MenuAdventureBtn->m_Transform.translation = {buttonX, buttonY};
+        m_Root.AddChild(m_MenuAdventureBtn);
+        m_MainMenuObjects.push_back(m_MenuAdventureBtn);
+
+        m_MainMenuInitialized = true;
+        LOG_DEBUG("MainMenu: screen initialised");
+    }
+
+    // ── Hover detection ─────────────────────────────────────────────────
+    // Half-extents of startAdventureB PNG — adjust to match actual image size
+    constexpr float BTN_HALF_W = 260.0f;
+    constexpr float BTN_HALF_H = 38.0f;
+
+    glm::vec2 cursor = Util::Input::GetCursorPosition();
+    glm::vec2 btnPos = m_MenuAdventureBtn->m_Transform.translation;
+    bool hovered = (std::abs(cursor.x - btnPos.x) <= BTN_HALF_W &&
+                    std::abs(cursor.y - btnPos.y) <= BTN_HALF_H);
+
+    // Swap drawable only on transition to avoid per-frame allocations
+    static bool s_wasHovered = false;
+    if (hovered != s_wasHovered) {
+        s_wasHovered = hovered;
+        m_MenuAdventureBtn->SetDrawable(std::make_shared<Util::Image>(
+            hovered ? RESOURCE_DIR "/Background/startAdventureB2.png"
+                    : RESOURCE_DIR "/Background/startAdventureB1.png"
+        ));
+    }
+
+    // ── Click detection ─────────────────────────────────────────────────
+    if (hovered && Util::Input::IsKeyUp(Util::Keycode::MOUSE_LB)) {
+        if (GameConfig::DEBUG_MODE) {
+            m_CurrentState = State::LEVEL_SELECT;
+        } else {
+            m_SelectedLevel = 1;
+            m_CurrentState  = State::START;
+        }
+    }
+
+    // ── Exit handling ───────────────────────────────────────────────────
+    if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
+        Util::Input::IfExit()) {
+        m_CurrentState = State::END;
+    }
+
+    m_Root.Update();
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Level Select Screen
@@ -71,10 +155,12 @@ void App::LevelSelect() {
                 24, {0.0f, -60.0f}, Util::Color(200, 255, 200, 255), 1.0f);
         addText("[4]  Level 1-4   5 lanes   Day 1",
                 24, {0.0f,-115.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+        addText("[6]  Level 1-6   5 lanes   Pole Vaulter Debut",
+                24, {0.0f,-170.0f}, Util::Color(200, 230, 255, 255), 1.0f);
 
         // Instructions
-        addText("Press  1 / 2 / 3 / 4  to begin",
-                20, {0.0f,-210.0f}, Util::Color(180, 180, 180, 255), 1.0f);
+        addText("Press  1 / 2 / 3 / 4 / 6  to begin",
+                20, {0.0f,-225.0f}, Util::Color(180, 180, 180, 255), 1.0f);
 
         m_LevelSelectInitialized = true;
         LOG_DEBUG("LevelSelect: screen initialised");
@@ -93,6 +179,9 @@ void App::LevelSelect() {
     } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_4)) {
         m_SelectedLevel = 4;
         m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_6)) {
+        m_SelectedLevel = 6;
+        m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
                Util::Input::IfExit()) {
         m_CurrentState = State::END;
@@ -104,14 +193,24 @@ void App::LevelSelect() {
 void App::Start() {
     LOG_TRACE("Start");
 
+    // ── Remove main menu UI from renderer ───────────────────────────────
+    for (auto& obj : m_MainMenuObjects) {
+        m_Root.RemoveChild(obj);
+    }
+    m_MainMenuObjects.clear();
+
     // ── Remove level-select UI from renderer ────────────────────────────
     for (auto& obj : m_LevelSelectObjects) {
         m_Root.RemoveChild(obj);
     }
     m_LevelSelectObjects.clear();
 
+    // ── Clean up any previous game objects ─────────────────────────────
+    CleanupGame();
+
     // ── Reset per-run state ─────────────────────────────────────────────
     m_GameOver           = false;
+    m_GameWon            = false;
     m_FirstFrameRendered = false;
     m_PreparationTimer   = 0.0f;
     m_SkyDropTimer       = 0.0f;
@@ -122,23 +221,39 @@ void App::Start() {
     LOG_DEBUG("App::Start: Level {} selected, {} active lanes",
               m_SelectedLevel, m_ActiveLanes.size());
 
-    // ══════════════════════════════════════════════════════════════════════
-    // Initialize ResourceManager FIRST - caches all animation paths
-    // ══════════════════════════════════════════════════════════════════════
-    ResourceManager::GetInstance().Initialize();
-
     // ── Background ──────────────────────────────────────────────────────
+    // Levels 1-3 use the unsodded (dirt) background; level 4 is fully grassed.
+    const char* bgPath = (m_SelectedLevel == 4)
+        ? RESOURCE_DIR "/Background/background1.png"
+        : RESOURCE_DIR "/Background/background1unsodded.png";
+
     m_Background = std::make_shared<Util::GameObject>();
-    auto bgImage = std::make_shared<Util::Image>(
-        RESOURCE_DIR "/Background/background1.png");
-    m_Background->SetDrawable(bgImage);
+    m_Background->SetDrawable(std::make_shared<Util::Image>(bgPath));
     m_Background->SetZIndex(GameConfig::ZIndex::BACKGROUND);
-
-    // Zoom and pan to fit the lawn area nicely in the window
-    m_Background->m_Transform.scale = {1.18f, 1.18f};
+    m_Background->m_Transform.scale       = {1.18f, 1.18f};
     m_Background->m_Transform.translation = {250.0f, -15.0f};
-
     m_Root.AddChild(m_Background);
+
+    // ── Sod overlay (green grass rows over dirt background) ───────────────
+    if (m_SelectedLevel != 4) {
+        const char* sodPath = (m_SelectedLevel == 1)
+            ? RESOURCE_DIR "/images/sod1row.png"
+            : RESOURCE_DIR "/images/sod3row.png";
+
+        // Horizontal center of the 9-column grid.
+        constexpr float SOD_X = (GameConfig::GRID_ORIGIN_X
+                              + GameConfig::GRID_WIDTH * 0.5f) + 25.0f;   // ≈ 145
+        // Both sod1row (lane 3) and sod3row (lanes 2–4) share the same
+        // vertical center: the mid-point of the middle three rows.
+        const float SOD_Y = GameConfig::LaneCenterY(2);          // ≈ -46.5
+
+        m_SodOverlay = std::make_shared<Util::GameObject>();
+        m_SodOverlay->SetDrawable(std::make_shared<Util::Image>(sodPath));
+        m_SodOverlay->SetZIndex(GameConfig::ZIndex::SOD);
+        m_SodOverlay->m_Transform.scale       = {1.18f, 1.18f};
+        m_SodOverlay->m_Transform.translation = {SOD_X, SOD_Y};
+        m_Root.AddChild(m_SodOverlay);
+    }
 
     // ── Initialize Grid ─────────────────────────────────────────────────
     for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
@@ -182,6 +297,12 @@ void App::Start() {
 
     m_PlantingSystem->SetOccupiedCallback(
         [this](int row, int col) {
+            // Block planting in inactive lanes (m_ActiveLanes is 1-based)
+            int lane = row + 1;
+            if (std::find(m_ActiveLanes.begin(), m_ActiveLanes.end(), lane)
+                    == m_ActiveLanes.end()) {
+                return true;  // Treat inactive row as occupied
+            }
             return IsCellOccupied(row, col);
         }
     );
@@ -216,6 +337,25 @@ void App::Update() {
     // ── Check Game Over ─────────────────────────────────────────────────
     if (m_GameOver) {
         m_Root.Update();  // Still render
+        // ENTER / SPACE → return to main menu
+        if (Util::Input::IsKeyUp(Util::Keycode::RETURN) ||
+            Util::Input::IsKeyUp(Util::Keycode::SPACE)) {
+            // m_ResultObjects live inside m_Root but CleanupGame() does not
+            // know about them, so remove them first before the full teardown.
+            for (auto& obj : m_ResultObjects) m_Root.RemoveChild(obj);
+            m_ResultObjects.clear();
+
+            // Tear down every gameplay object (background, plants, zombies,
+            // suns, projectiles, lawnmowers, GUI) before showing the menu.
+            CleanupGame();
+
+            m_GameOver               = false;
+            m_GameWon                = false;
+            m_MainMenuInitialized    = false;
+            m_LevelSelectInitialized = false;
+            m_CurrentState           = State::MAIN_MENU;
+            return;
+        }
         if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
             Util::Input::IfExit()) {
             m_CurrentState = State::END;
@@ -305,6 +445,80 @@ void App::End() {
     LOG_TRACE("End");
 }
 
+void App::CleanupGame() {
+    if (!m_Background) return;  // Nothing to clean up (first run)
+
+    m_Root.RemoveChild(m_Background);
+    m_Background.reset();
+
+    if (m_SodOverlay) {
+        m_Root.RemoveChild(m_SodOverlay);
+        m_SodOverlay.reset();
+    }
+
+    if (m_SunManager) {
+        for (auto& o : m_SunManager->GetUIElements()) m_Root.RemoveChild(o);
+        m_SunManager.reset();
+    }
+    if (m_SeedBank) {
+        for (auto& o : m_SeedBank->GetAllObjects()) m_Root.RemoveChild(o);
+        m_SeedBank.reset();
+    }
+    if (m_CursorItem)  { m_Root.RemoveChild(m_CursorItem);  m_CursorItem.reset(); }
+    if (m_GhostPlant)  { m_Root.RemoveChild(m_GhostPlant);  m_GhostPlant.reset(); }
+    if (m_ProgressBar) {
+        for (auto& o : m_ProgressBar->GetAllObjects()) m_Root.RemoveChild(o);
+        m_ProgressBar.reset();
+    }
+    m_PlantingSystem.reset();
+    m_WaveManager.reset();
+
+    for (int r = 0; r < GameConfig::GRID_ROWS; ++r)
+        for (int c = 0; c < GameConfig::GRID_COLS; ++c)
+            if (m_PlantGrid[r][c]) {
+                m_Root.RemoveChild(m_PlantGrid[r][c]);
+                m_PlantGrid[r][c] = nullptr;
+            }
+
+    for (auto& s : m_Suns)        m_Root.RemoveChild(s);
+    for (auto& p : m_Projectiles) m_Root.RemoveChild(p);
+    for (auto& z : m_Zombies)     m_Root.RemoveChild(z);
+    for (auto& l : m_Lawnmowers)  m_Root.RemoveChild(l);
+
+    m_Suns.clear();
+    m_Projectiles.clear();
+    m_Zombies.clear();
+    m_Lawnmowers.clear();
+
+    // Remove any lingering result overlay
+    for (auto& o : m_ResultObjects) m_Root.RemoveChild(o);
+    m_ResultObjects.clear();
+}
+
+void App::ShowResultOverlay(bool won) {
+    auto addText = [&](const std::string& text, int fontSize,
+                       glm::vec2 pos, Util::Color color, float zIndex) {
+        auto obj = std::make_shared<Util::GameObject>();
+        obj->SetDrawable(std::make_shared<Util::Text>(
+            LEVEL_SELECT_FONT, fontSize, text, color));
+        obj->m_Transform.translation = pos;
+        obj->SetZIndex(zIndex);
+        m_Root.AddChild(obj);
+        m_ResultObjects.push_back(obj);
+    };
+
+    constexpr float Z = 20.0f;
+    if (won) {
+        addText("YOU WIN!",
+                64, {0.0f, 60.0f},  Util::Color(255, 220,  0, 255), Z);
+    } else {
+        addText("GAME OVER",
+                64, {0.0f, 60.0f},  Util::Color(220,  30, 30, 255), Z);
+    }
+    addText("Press ENTER or SPACE to return to menu",
+            22, {0.0f, -20.0f}, Util::Color(255, 255, 255, 255), Z);
+}
+
 void App::PlacePlant(PlantType type, int row, int col) {
     // Check cell is empty (double-check)
     if (m_PlantGrid[row][col] != nullptr) {
@@ -355,6 +569,18 @@ void App::PlacePlant(PlantType type, int row, int col) {
             cherryBomb->SetExplosionCallback(
                 [this, row, col](glm::vec2 position, float radius, int damage) {
                     HandleCherryBombExplosion(row, col, damage);
+                }
+            );
+        }
+    }
+
+    // ── Wire up PotatoMine explosion callback ────────────────────────────
+    if (type == PlantType::POTATOMINE) {
+        auto potatoMine = std::dynamic_pointer_cast<PotatoMine>(plant);
+        if (potatoMine) {
+            potatoMine->SetExplosionCallback(
+                [this, row, col](glm::vec2 position, float radius, int damage) {
+                    HandlePotatoMineExplosion(row, col, damage);
                 }
             );
         }
@@ -427,10 +653,12 @@ void App::UpdateSuns(float deltaTime) {
             GameConfig::GRID_RIGHT - 50.0f
         );
 
-        // Random target Y position in the lawn area (where sun will stop falling)
+        // Random target Y position constrained to active lanes
+        int topRow = *std::min_element(m_ActiveLanes.begin(), m_ActiveLanes.end()) - 1;
+        int botRow = *std::max_element(m_ActiveLanes.begin(), m_ActiveLanes.end()) - 1;
         std::uniform_real_distribution<float> yDist(
-            GameConfig::LaneCenterY(3),  // Lower-middle lane
-            GameConfig::LaneCenterY(1)   // Upper-middle lane
+            GameConfig::LaneCenterY(botRow),  // lowest active lane → smallest Y
+            GameConfig::LaneCenterY(topRow)   // highest active lane → largest Y
         );
 
         float targetY = yDist(gen);
@@ -472,10 +700,9 @@ void App::SpawnProjectile(ProjectileType type, int damage, int row, const glm::v
             projectile = std::make_shared<Pea>(damage, row, position);
             break;
 
-        // Future projectile types:
-        // case ProjectileType::FROZEN_PEA:
-        //     projectile = std::make_shared<FrozenPea>(damage, row, position);
-        //     break;
+        case ProjectileType::FROZEN_PEA:
+            projectile = std::make_shared<FrozenPea>(damage, row, position);
+            break;
 
         default:
             LOG_WARN("Unknown projectile type: {}", static_cast<int>(type));
@@ -510,8 +737,9 @@ void App::UpdateProjectiles(float deltaTime) {
             float zombieRight = zombie->GetRightEdge();
 
             if (projX >= zombieLeft && projX <= zombieRight) {
-                // Hit! Apply damage and deactivate projectile
+                // Hit! Apply damage, trigger special effects, then deactivate
                 zombie->TakeDamage(projectile->GetDamage());
+                projectile->OnZombieHit(*zombie);  // e.g. chill for FrozenPea
                 projectile->OnHit();
 
                 LOG_DEBUG("Projectile hit {} for {} damage! Zombie HP: {}",
@@ -652,6 +880,16 @@ void App::CheckZombiePlantCollisions() {
 
             // Check if zombie has reached this plant from the right side
             if (zombieLeft <= plantRight) {
+                // If the plant is an ARMED instant-kill plant, trigger it immediately
+                // instead of having the zombie attack it normally.
+                auto* ikPlant = dynamic_cast<InstantKillPlant*>(plant.get());
+                if (ikPlant && ikPlant->IsArmed() && !ikPlant->HasTriggered()) {
+                    ikPlant->Trigger();
+                    LOG_DEBUG("Zombie {} triggered armed instant-kill plant at row {} col {}",
+                              zombie->GetName(), row, col);
+                    break;  // Don't let zombie start attacking
+                }
+
                 // Zombie reached plant - switch to ATTACKING
                 zombie->SetTargetPlant(plant);
                 zombie->SetState(Zombie::State::ATTACKING);
@@ -681,22 +919,28 @@ void App::RemoveDeadPlants() {
 }
 
 void App::CheckGameOver() {
-    // ═══════════════════════════════════════════════════════════════════════
-    // Check if any zombie has reached the house (left edge of lawn)
-    // ═══════════════════════════════════════════════════════════════════════
-    
+    // ── Win condition: all waves done and battlefield clear ─────────────
+    if (m_WaveManager->IsLevelComplete() && m_Zombies.empty()) {
+        m_GameOver = true;
+        m_GameWon  = true;
+        ShowResultOverlay(true);
+        LOG_INFO("Level complete! All waves cleared.");
+        return;
+    }
+
+    // ── Loss condition: zombie reaches the house ─────────────────────────
     for (const auto& zombie : m_Zombies) {
-        // Skip dead, dying, or charred zombies (they can't eat brains)
         if (zombie->GetState() == Zombie::State::DEAD ||
             zombie->GetState() == Zombie::State::DYING ||
             zombie->GetState() == Zombie::State::CHARRED) {
             continue;
         }
-        
         float zombieX = zombie->GetTransform().translation.x;
         if (zombieX < GameConfig::HOUSE_X) {
             m_GameOver = true;
-            m_CurrentState = State::END;
+            m_GameWon  = false;
+            ShowResultOverlay(false);
+            LOG_INFO("Game over! Zombie reached the house.");
             return;
         }
     }
@@ -825,4 +1069,36 @@ void App::HandleCherryBombExplosion(int centerRow, int centerCol, int damage) {
     }
 
     LOG_DEBUG("CherryBomb killed {} zombies in explosion!", zombiesKilled);
+}
+
+void App::HandlePotatoMineExplosion(int centerRow, int centerCol, int damage) {
+    LOG_DEBUG("PotatoMine EXPLOSION at row {}, col {} with {} damage!",
+              centerRow, centerCol, damage);
+
+    glm::vec2 centerPos = GameConfig::CellToPosition(centerRow, centerCol);
+
+    // Contact-range blast - smaller than CherryBomb
+    float explosionRadiusX = GameConfig::CELL_WIDTH  * 0.6f;
+    float explosionRadiusY = GameConfig::CELL_HEIGHT * 0.6f;
+
+    int zombiesKilled = 0;
+    for (auto& zombie : m_Zombies) {
+        if (zombie->GetState() == Zombie::State::DEAD   ||
+            zombie->GetState() == Zombie::State::DYING  ||
+            zombie->GetState() == Zombie::State::CHARRED) {
+            continue;
+        }
+
+        glm::vec2 zombiePos = zombie->GetTransform().translation;
+        float dx = std::abs(zombiePos.x - centerPos.x);
+        float dy = std::abs(zombiePos.y - centerPos.y);
+
+        if (dx <= explosionRadiusX && dy <= explosionRadiusY) {
+            zombie->TakeExplosionDamage(damage);
+            zombiesKilled++;
+            LOG_DEBUG("  - {} caught in PotatoMine blast!", zombie->GetName());
+        }
+    }
+
+    LOG_DEBUG("PotatoMine killed {} zombie(s)!", zombiesKilled);
 }

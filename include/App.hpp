@@ -26,6 +26,8 @@
 class App {
 public:
     enum class State {
+        BOOT,
+        MAIN_MENU,
         LEVEL_SELECT,
         START,
         UPDATE,
@@ -34,6 +36,8 @@ public:
 
     State GetCurrentState() const { return m_CurrentState; }
 
+    void Boot();
+    void MainMenu();
     void LevelSelect();
     void Start();
     void Update();
@@ -66,8 +70,14 @@ private:
 
     // Explosion system methods
     void HandleCherryBombExplosion(int centerRow, int centerCol, int damage);
+    void HandlePotatoMineExplosion(int centerRow, int centerCol, int damage);
 
-    State m_CurrentState = State::LEVEL_SELECT;
+    State m_CurrentState = State::BOOT;
+
+    // ── Main menu state ───────────────────────────────────────────────
+    bool m_MainMenuInitialized = false;
+    std::vector<std::shared_ptr<Util::GameObject>> m_MainMenuObjects;
+    std::shared_ptr<Util::GameObject> m_MenuAdventureBtn;  ///< kept for per-frame hit-test
 
     // ── Level selection state ─────────────────────────────────────────
     int  m_SelectedLevel           = 1;    ///< 1–4, set in LevelSelect()
@@ -79,8 +89,9 @@ private:
 
     Util::Renderer m_Root;
 
-    // Full-screen lawn background
+    // Full-screen lawn background and conditional sod overlay
     std::shared_ptr<Util::GameObject> m_Background;
+    std::shared_ptr<Util::GameObject> m_SodOverlay;
 
     // 5x9 grid of plant slots (nullptr = empty cell)
     std::shared_ptr<Plant> m_PlantGrid[GameConfig::GRID_ROWS][GameConfig::GRID_COLS];
@@ -112,7 +123,13 @@ private:
 
     // Game state
     bool m_GameOver = false;
+    bool m_GameWon  = false;
     void CheckGameOver();
+    void CleanupGame();
+    void ShowResultOverlay(bool won);
+
+    // Result overlay objects (shown on win/loss, removed on return to menu)
+    std::vector<std::shared_ptr<Util::GameObject>> m_ResultObjects;
 
     // Grace period: 20s after first visible frame before zombies spawn.
     // Ensures the blank loading screen is gone and the player can prepare.

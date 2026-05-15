@@ -2,10 +2,13 @@
 #include "Plants.hpp"
 
 // Plant resource directories
-#define PEASHOOTER_DIR RESOURCE_DIR "/plants/Peashooter"
-#define SUNFLOWER_DIR RESOURCE_DIR "/plants/Sunflower"
-#define WALLNUT_DIR RESOURCE_DIR "/plants/WallNut"
-#define CHERRYBOMB_DIR RESOURCE_DIR "/plants/CherryBomb"
+#define PEASHOOTER_DIR  RESOURCE_DIR "/plants/Peashooter"
+#define SUNFLOWER_DIR   RESOURCE_DIR "/plants/Sunflower"
+#define WALLNUT_DIR     RESOURCE_DIR "/plants/WallNut"
+#define CHERRYBOMB_DIR  RESOURCE_DIR "/plants/CherryBomb"
+#define REPEATER_DIR    RESOURCE_DIR "/plants/Repeater"
+#define SNOWPEA_DIR     RESOURCE_DIR "/plants/SnowPea"
+#define POTATOMINE_DIR  RESOURCE_DIR "/plants/PotatoMine"
 
 // Static array of plant info - order must match PlantType enum
 static const PlantInfo s_PlantInfo[] = {
@@ -62,6 +65,48 @@ static const PlantInfo s_PlantInfo[] = {
         []() -> std::shared_ptr<Plant> {
             auto plant = std::make_shared<CherryBomb>();
             plant->Initialize(CHERRYBOMB_DIR);
+            return plant;
+        }
+    },
+    // REPEATER
+    {
+        PlantType::REPEATER,
+        "Repeater",
+        Repeater::REPEATER_SUN_COST,          // 200
+        Repeater::REPEATER_RECHARGE,          // 7.5f
+        REPEATER_DIR "/Idle.png",
+        REPEATER_DIR "/AccurateIdle",
+        []() -> std::shared_ptr<Plant> {
+            auto plant = std::make_shared<Repeater>();
+            plant->Initialize(REPEATER_DIR "/AccurateIdle");
+            return plant;
+        }
+    },
+    // SNOWPEA
+    {
+        PlantType::SNOWPEA,
+        "Snow Pea",
+        SnowPea::SNOWPEA_SUN_COST,            // 175
+        SnowPea::SNOWPEA_RECHARGE,            // 7.5f
+        SNOWPEA_DIR "/Idle.png",
+        SNOWPEA_DIR "/SnowaccurateIdle",
+        []() -> std::shared_ptr<Plant> {
+            auto plant = std::make_shared<SnowPea>();
+            plant->Initialize(SNOWPEA_DIR "/SnowaccurateIdle");
+            return plant;
+        }
+    },
+    // POTATOMINE
+    {
+        PlantType::POTATOMINE,
+        "Potato Mine",
+        PotatoMine::POTATOMINE_SUN_COST,      // 25
+        PotatoMine::POTATOMINE_RECHARGE,      // 30.0f
+        POTATOMINE_DIR "/Potatomine0001.png",
+        POTATOMINE_DIR,
+        []() -> std::shared_ptr<Plant> {
+            auto plant = std::make_shared<PotatoMine>();
+            plant->Initialize(POTATOMINE_DIR);
             return plant;
         }
     }

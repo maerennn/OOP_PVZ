@@ -95,12 +95,17 @@ public:
     static constexpr const char* ZOMBIE_CHARRED = "zombie.charred";  // Burnt by Cherry Bomb
 
     // Plant animations
-    static constexpr const char* PLANT_SUNFLOWER_IDLE = "plant.sunflower.idle";
-    static constexpr const char* PLANT_PEASHOOTER_IDLE = "plant.peashooter.idle";
-    static constexpr const char* PLANT_WALLNUT_HEALTHY = "plant.wallnut.healthy";
-    static constexpr const char* PLANT_WALLNUT_DAMAGED = "plant.wallnut.damaged";
-    static constexpr const char* PLANT_WALLNUT_CRITICAL = "plant.wallnut.critical";
-    static constexpr const char* PLANT_CHERRYBOMB_FUSE = "plant.cherrybomb.fuse";
+    static constexpr const char* PLANT_SUNFLOWER_IDLE      = "plant.sunflower.idle";
+    static constexpr const char* PLANT_PEASHOOTER_IDLE     = "plant.peashooter.idle";
+    static constexpr const char* PLANT_WALLNUT_HEALTHY     = "plant.wallnut.healthy";
+    static constexpr const char* PLANT_WALLNUT_DAMAGED     = "plant.wallnut.damaged";
+    static constexpr const char* PLANT_WALLNUT_CRITICAL    = "plant.wallnut.critical";
+    static constexpr const char* PLANT_CHERRYBOMB_FUSE     = "plant.cherrybomb.fuse";
+    static constexpr const char* PLANT_REPEATER_IDLE       = "plant.repeater.idle";
+    static constexpr const char* PLANT_SNOWPEA_IDLE        = "plant.snowpea.idle";
+    static constexpr const char* PLANT_POTATOMINE_UNARMED  = "plant.potatomine.unarmed";
+    static constexpr const char* PLANT_POTATOMINE_ARMING   = "plant.potatomine.arming";
+    static constexpr const char* PLANT_POTATOMINE_ARMED    = "plant.potatomine.armed";
 
     // Other game objects
     static constexpr const char* SUN_FLOATING = "sun.floating";

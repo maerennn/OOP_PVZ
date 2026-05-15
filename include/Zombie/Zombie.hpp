@@ -118,6 +118,15 @@ public:
 
     // State queries
     bool IsAlive() const { return m_Health > 0; }
+    bool IsChilled() const { return m_ChillTimer > 0.0f; }
+
+    /**
+     * @brief Apply a chill/slow effect for the given duration.
+     * While chilled the zombie moves and attacks at half speed.
+     * Re-applying resets the timer.
+     * @param duration Seconds to remain chilled
+     */
+    void ApplyChill(float duration);
     bool IsDead() const { return m_State == State::DEAD; }
     bool IsAttacking() const { return m_State == State::ATTACKING; }
     bool ShouldRemove() const { return m_State == State::DEAD; }
@@ -166,8 +175,12 @@ protected:
 
     // Death timer (fallback if animation state detection fails)
     float m_DeathTimer = 0.0f;
-    static constexpr float DEATH_ANIMATION_DURATION = 4.5f;  // ~92 frames @ 50ms
+    static constexpr float DEATH_ANIMATION_DURATION  = 4.5f;  // ~92 frames @ 50ms
     static constexpr float CHARRED_ANIMATION_DURATION = 1.9f;  // ~38 frames @ 50ms
+
+    // Chill (Snow Pea) effect
+    float m_ChillTimer = 0.0f;
+    static constexpr float CHILL_SPEED_FACTOR = 0.5f;
 
     // Animation
     std::shared_ptr<Util::Animation> m_CurrentAnimation;

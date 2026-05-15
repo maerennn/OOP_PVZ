@@ -22,15 +22,21 @@ void Zombie::Update(float deltaTime) {
 
     switch (m_State) {
         case State::WALKING:
-            // Move left toward the house
-            m_Transform.translation.x -= m_Speed * deltaTime;
+            // Move left toward the house (at half speed when chilled)
+            if (m_ChillTimer > 0.0f) {
+                m_Transform.translation.x -= m_Speed * CHILL_SPEED_FACTOR * deltaTime;
+            } else {
+                m_Transform.translation.x -= m_Speed * deltaTime;
+            }
             break;
 
         case State::ATTACKING: {
             // Lock the weak_ptr — plant may have been removed by another system
             auto target = m_TargetPlant.lock();
             if (target && target->IsAlive()) {
-                int damageThisFrame = static_cast<int>(m_Damage * deltaTime);
+                // Halve damage rate when chilled
+                float attackMultiplier = (m_ChillTimer > 0.0f) ? CHILL_SPEED_FACTOR : 1.0f;
+                int damageThisFrame = static_cast<int>(m_Damage * attackMultiplier * deltaTime);
                 if (damageThisFrame < 1) damageThisFrame = 1;  // Minimum 1 damage per frame
                 target->TakeDamage(damageThisFrame);
 
@@ -85,6 +91,12 @@ void Zombie::Update(float deltaTime) {
             // Do nothing - waiting for removal by App
             break;
     }
+
+    // Tick chill timer
+    if (m_ChillTimer > 0.0f) {
+        m_ChillTimer -= deltaTime;
+        if (m_ChillTimer < 0.0f) m_ChillTimer = 0.0f;
+    }
 }
 
 void Zombie::TakeDamage(int amount) {
@@ -115,6 +127,15 @@ void Zombie::TakeExplosionDamage(int amount) {
         m_DeathType = DeathType::EXPLOSION;
         SetState(State::CHARRED);
     }
+}
+
+void Zombie::ApplyChill(float duration) {
+    if (m_State == State::DEAD || m_State == State::DYING || m_State == State::CHARRED) {
+        return;
+    }
+    // Reset (or extend) the chill timer
+    m_ChillTimer = duration;
+    LOG_DEBUG("{} chilled for {:.1f}s", m_Name, duration);
 }
 
 void Zombie::SetState(State newState) {

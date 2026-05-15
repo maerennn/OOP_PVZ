@@ -6,6 +6,9 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+// Forward declaration - full type not needed in this header
+class Zombie;
+
 /**
  * @file Projectile.hpp
  * @brief Base class for all projectiles in the game.
@@ -66,11 +69,16 @@ public:
      */
     virtual void OnHit();
 
-    // Accessors
-    ProjectileType GetType() const { return m_Type; }
-    int GetDamage() const { return m_Damage; }
-    int GetRow() const { return m_Row; }
+/**
+ * @brief Called on the zombie that was hit, before deactivation.
+ * Override to apply secondary effects (chill, fire, etc.).
+ * Default implementation is a no-op.
+ * @param zombie The zombie that was struck by this projectile
+ */
+virtual void OnZombieHit(Zombie& zombie) {};
     float GetSpeed() const { return m_Speed; }
+    int GetRow() const { return m_Row; }
+    int GetDamage() const { return m_Damage; }
 
     // State
     bool IsActive() const { return m_IsActive; }
