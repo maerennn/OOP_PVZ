@@ -40,6 +40,18 @@ public:
     void Update(float deltaTime) override;
 
     /**
+     * @brief Vault over the first plant; attack subsequent plants normally.
+     */
+    void OnPlantEncountered(std::shared_ptr<Plant> plant) override;
+
+    /**
+     * @brief Y offset to align sprite with its lane (canvas body is below centre).
+     * Measured: body visual centre is 263.5px below 2058×1295 canvas centre;
+     * at scale 0.25 that is ~65.9px.  Offset compensates vs basic zombie (1.5px).
+     */
+    float GetSpriteYOffset() const override { return 64.0f; }
+
+    /**
      * @brief Check if the pole vaulter still has its pole.
      */
     bool HasPole() const { return m_HasPole; }
@@ -53,9 +65,11 @@ protected:
 private:
     bool m_HasPole = true;
     float m_JumpTimer = 0.0f;
+    float m_VaultedPlantX = 0.0f;  // X of the plant being vaulted; used to snap landing
     static constexpr float JUMP_DURATION = 1.7f;  // ~35 frames @ 50ms
-    
+
     std::shared_ptr<Util::Animation> m_JumpAnimation;
+    std::shared_ptr<Util::Animation> m_WalkingSlowAnimation;  // After-jump walk (frames 87-138)
 };
 
 #endif // POLEVAULT_ZOMBIE_HPP

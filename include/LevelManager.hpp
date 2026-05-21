@@ -51,6 +51,8 @@ public:
     static LevelConfig CreateLevel1_3();  ///< Intermediate: 4 lanes, +Wall-nut
     static LevelConfig CreateLevel1_4();  ///< Full day 1: 5 lanes, all plants
     static LevelConfig CreateLevel1_6();  ///< Pole Vaulter debut: 5 lanes, 10 waves
+    static LevelConfig CreateLevel1_7();  ///< The Vaulter's Arrival: 5 lanes, 20 waves, all three zombie types
+    static LevelConfig CreateLevel1_8();  ///< Bucket Brigade: 5 lanes, 10 waves, Buckethead debut
 };
 
 #endif // LEVEL_MANAGER_HPP

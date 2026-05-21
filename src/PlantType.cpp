@@ -9,6 +9,7 @@
 #define REPEATER_DIR    RESOURCE_DIR "/plants/Repeater"
 #define SNOWPEA_DIR     RESOURCE_DIR "/plants/SnowPea"
 #define POTATOMINE_DIR  RESOURCE_DIR "/plants/PotatoMine"
+#define CHOMPER_DIR     RESOURCE_DIR "/plants/Chomper"
 
 // Static array of plant info - order must match PlantType enum
 static const PlantInfo s_PlantInfo[] = {
@@ -107,6 +108,20 @@ static const PlantInfo s_PlantInfo[] = {
         []() -> std::shared_ptr<Plant> {
             auto plant = std::make_shared<PotatoMine>();
             plant->Initialize(POTATOMINE_DIR);
+            return plant;
+        }
+    },
+    // CHOMPER
+    {
+        PlantType::CHOMPER,
+        "Chomper",
+        Chomper::CHOMPER_SUN_COST,            // 150
+        Chomper::CHOMPER_RECHARGE,            // 30.0f
+        CHOMPER_DIR "/idle/Chomper.png0001.png",
+        CHOMPER_DIR,
+        []() -> std::shared_ptr<Plant> {
+            auto plant = std::make_shared<Chomper>();
+            plant->Initialize(CHOMPER_DIR);
             return plant;
         }
     }

@@ -123,8 +123,17 @@ void ResourceManager::Initialize() {
     RegisterAnimation(
         ZOMBIE_POLEVAULT_WALKING,
         GenerateFramePaths(
-            RESOURCE_DIR "/zombies/polevaulter/Walking 2/polevaulter%04d.png",
-            87, 138),
+            RESOURCE_DIR "/zombies/polevaulter/Walking_Before_Jump/polevaulter%04d.png",
+            1, 51),
+        50,
+        true
+    );
+
+    RegisterAnimation(
+        ZOMBIE_POLEVAULT_WALKING_SLOW,
+        GenerateFramePaths(
+            RESOURCE_DIR "/zombies/polevaulter/Walking_After_Jump/polevaulter%04d.png",
+            94, 138),
         50,
         true
     );
@@ -151,7 +160,7 @@ void ResourceManager::Initialize() {
         ZOMBIE_POLEVAULT_JUMP,
         GenerateFramePaths(
             RESOURCE_DIR "/zombies/polevaulter/Jump 0052-0086/polevaulter%04d.png",
-            52, 86),
+            52, 92),
         50,
         false
     );
@@ -279,6 +288,47 @@ void ResourceManager::Initialize() {
             18, 31),
         80,
         true
+    );
+
+    // ── Chomper ─────────────────────────────────────────────────────────────
+    // Idle: frames 1–27, looping
+    RegisterAnimation(
+        PLANT_CHOMPER_IDLE,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/Chomper/idle/Chomper.png%04d.png",
+            1, 27),
+        50,
+        true
+    );
+
+    // Capture: frames 28–50, one-shot (non-looping)
+    RegisterAnimation(
+        PLANT_CHOMPER_CAPTURE,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/Chomper/capture/Chomper.png%04d.png",
+            28, 50),
+        50,
+        false
+    );
+
+    // Eating: frames 51–66, looping
+    RegisterAnimation(
+        PLANT_CHOMPER_EATING,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/Chomper/eating/Chomper.png%04d.png",
+            51, 66),
+        50,
+        true
+    );
+
+    // Eating Done: frames 67–94, one-shot (non-looping)
+    RegisterAnimation(
+        PLANT_CHOMPER_EATING_DONE,
+        GenerateFramePaths(
+            RESOURCE_DIR "/plants/Chomper/eating_done/Chomper.png%04d.png",
+            67, 94),
+        50,
+        false
     );
 
     // ══════════════════════════════════════════════════════════════════════

@@ -18,6 +18,7 @@ enum class PlantType {
     REPEATER,
     SNOWPEA,
     POTATOMINE,
+    CHOMPER,
     COUNT  // Keep last - represents number of plant types
 };
 

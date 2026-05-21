@@ -3,11 +3,11 @@
 #include "Util/Image.hpp"
 #include "GameConfig.hpp"
 
-#define SEED_BANK_BG RESOURCE_DIR "/gameGUI/SeedBankCoop.png"
+#define SEED_BANK_BG RESOURCE_DIR "/gameGUI/SeedBank.png"
 
 // Layout constants
 namespace {
-    constexpr float BANK_X = -420.0f;           // Position from center
+    constexpr float BANK_X = -365.0f;           // Position from center
     constexpr float BANK_Y = 305.0f;            // Near top
     constexpr float PACKET_START_X = -499.0f;   // First packet X position
     constexpr float PACKET_Y = 305.0f;          // Packets Y position

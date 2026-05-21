@@ -19,6 +19,7 @@
 #include "Plant/ShooterPlant.hpp"
 #include "Plant/CherryBomb.hpp"
 #include "Plant/PotatoMine.hpp"
+#include "Plant/Chomper.hpp"
 #include <algorithm>
 #include <random>
 #include <cmath>
@@ -157,10 +158,13 @@ void App::LevelSelect() {
                 24, {0.0f,-115.0f}, Util::Color(200, 255, 200, 255), 1.0f);
         addText("[6]  Level 1-6   5 lanes   Pole Vaulter Debut",
                 24, {0.0f,-170.0f}, Util::Color(200, 230, 255, 255), 1.0f);
-
+        addText("[7]  Level 1-7   5 lanes   Pole Vaulter Debut",
+                24, {0.0f,-225.0f}, Util::Color(200, 230, 255, 255), 1.0f);
+        addText("[8]  Level 1-8   5 lanes   Bucket Brigade",
+                24, {0.0f,-280.0f}, Util::Color(200, 230, 255, 255), 1.0f);
         // Instructions
-        addText("Press  1 / 2 / 3 / 4 / 6  to begin",
-                20, {0.0f,-225.0f}, Util::Color(180, 180, 180, 255), 1.0f);
+        addText("Press  1 / 2 / 3 / 4 / 6 / 7 /8 to begin",
+                20, {0.0f,-335.0f}, Util::Color(180, 180, 180, 255), 1.0f);
 
         m_LevelSelectInitialized = true;
         LOG_DEBUG("LevelSelect: screen initialised");
@@ -181,6 +185,12 @@ void App::LevelSelect() {
         m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_6)) {
         m_SelectedLevel = 6;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_7)) {
+        m_SelectedLevel = 7;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_8)) {
+        m_SelectedLevel = 8;
         m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
                Util::Input::IfExit()) {
@@ -223,7 +233,7 @@ void App::Start() {
 
     // ── Background ──────────────────────────────────────────────────────
     // Levels 1-3 use the unsodded (dirt) background; level 4 is fully grassed.
-    const char* bgPath = (m_SelectedLevel == 4)
+    const char* bgPath = (m_SelectedLevel >= 4)
         ? RESOURCE_DIR "/Background/background1.png"
         : RESOURCE_DIR "/Background/background1unsodded.png";
 
@@ -235,7 +245,7 @@ void App::Start() {
     m_Root.AddChild(m_Background);
 
     // ── Sod overlay (green grass rows over dirt background) ───────────────
-    if (m_SelectedLevel != 4) {
+    if (m_SelectedLevel <= 3) {
         const char* sodPath = (m_SelectedLevel == 1)
             ? RESOURCE_DIR "/images/sod1row.png"
             : RESOURCE_DIR "/images/sod3row.png";
@@ -403,6 +413,9 @@ void App::Update() {
     if (m_GameOver) return;  // Early exit if game just ended
 
     // ── Check Zombie-Plant Collisions ───────────────────────────────────
+    // Chomper detection runs first so approaching zombies are killed before
+    // they can transition to ATTACKING via OnPlantEncountered().
+    UpdateChomperTargets();
     CheckZombiePlantCollisions();
 
     // ── Update Shooter Target Detection ─────────────────────────────────
@@ -581,6 +594,24 @@ void App::PlacePlant(PlantType type, int row, int col) {
             potatoMine->SetExplosionCallback(
                 [this, row, col](glm::vec2 position, float radius, int damage) {
                     HandlePotatoMineExplosion(row, col, damage);
+                }
+            );
+        }
+    }
+
+    // ── Wire up Chomper chomp callback ───────────────────────────────────
+    if (type == PlantType::CHOMPER) {
+        auto chomper = std::dynamic_pointer_cast<Chomper>(plant);
+        if (chomper) {
+            chomper->SetChompCallback(
+                [this](std::shared_ptr<Zombie> zombie) {
+                    if (zombie) {
+                        // Skip the dying animation entirely — zombie is
+                        // swallowed whole and must vanish this same frame.
+                        zombie->SetVisible(false);
+                        zombie->SetState(Zombie::State::DEAD);
+                        LOG_DEBUG("Chomper instantly swallowed {}!", zombie->GetName());
+                    }
                 }
             );
         }
@@ -788,6 +819,61 @@ void App::UpdateShooterTargets() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// Chomper Detection
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::UpdateChomperTargets() {
+    // For each Chomper in the grid, find the closest WALKING or ATTACKING
+    // zombie within CHOMPER_RANGE to its right in the same row and offer it
+    // as a target. SetNearestZombie() is a no-op when the Chomper is not IDLE.
+
+    for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
+        for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
+            auto& plant = m_PlantGrid[r][c];
+            if (!plant) continue;
+
+            auto chomper = std::dynamic_pointer_cast<Chomper>(plant);
+            if (!chomper) continue;
+
+            // Only bother scanning if this Chomper is IDLE
+            if (chomper->GetChomperState() != Chomper::ChomperState::IDLE) continue;
+
+            const float chomperX = plant->m_Transform.translation.x;
+
+            std::shared_ptr<Zombie> nearest;
+            float nearestDist = Chomper::CHOMPER_RANGE + 1.0f;  // sentinel
+
+            for (const auto& zombie : m_Zombies) {
+                if (zombie->GetRow() != r) continue;
+                if (zombie->IsDead()) continue;
+
+                const Zombie::State zs = zombie->GetState();
+                if (zs != Zombie::State::WALKING && zs != Zombie::State::ATTACKING) continue;
+
+                const float zx   = zombie->m_Transform.translation.x;
+                // Use a half-cell tolerance on the left so a zombie that
+                // has already reached the Chomper's tile is still caught.
+                const float dist = zx - chomperX;
+                static constexpr float LEFT_TOLERANCE = GameConfig::CELL_WIDTH * 0.5f;
+
+                if (dist >= -LEFT_TOLERANCE && dist <= Chomper::CHOMPER_RANGE) {
+                    // Rank by absolute distance so the closest zombie wins
+                    const float absDist = std::abs(dist);
+                    if (absDist < nearestDist) {
+                        nearestDist = absDist;
+                        nearest     = zombie;
+                    }
+                }
+            }
+
+            if (nearest) {
+                chomper->SetNearestZombie(nearest);
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // Zombie System Implementation
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -818,9 +904,9 @@ void App::SpawnZombie(ZombieType type, int lane) {
     zombie->Initialize();
     zombie->SetRow(row);
 
-    // Position at right edge of screen, centered in lane
+    // Position at right edge of screen, centered in lane with per-zombie Y correction
     float spawnX = GameConfig::ZOMBIE_SPAWN_X;
-    float spawnY = GameConfig::LaneCenterY(row);
+    float spawnY = GameConfig::LaneCenterY(row) + zombie->GetSpriteYOffset();
     zombie->m_Transform.translation = {spawnX, spawnY};
 
     m_Root.AddChild(zombie);
@@ -855,7 +941,7 @@ void App::CheckZombiePlantCollisions() {
     // ══════════════════════════════════════════════════════════════════════
 
     for (auto& zombie : m_Zombies) {
-        // Only check walking zombies
+        // Only check walking zombies — skip jumping, attacking, dying, dead
         if (zombie->GetState() != Zombie::State::WALKING) continue;
 
         int row = zombie->GetRow();
@@ -890,12 +976,11 @@ void App::CheckZombiePlantCollisions() {
                     break;  // Don't let zombie start attacking
                 }
 
-                // Zombie reached plant - switch to ATTACKING
-                zombie->SetTargetPlant(plant);
-                zombie->SetState(Zombie::State::ATTACKING);
-                LOG_DEBUG("Zombie {} attacking plant at row {} col {}",
+                // Delegate to zombie — default attacks, PoleVaultZombie jumps
+                zombie->OnPlantEncountered(plant);
+                LOG_DEBUG("Zombie {} encountered plant at row {} col {}",
                           zombie->GetName(), row, col);
-                break;  // Only attack one plant at a time
+                break;  // Only handle one plant at a time
             }
         }
     }

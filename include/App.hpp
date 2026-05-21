@@ -63,6 +63,9 @@ private:
     void CheckZombiePlantCollisions();
     void RemoveDeadPlants();
 
+    // Chomper detection — feeds the nearest in-range zombie to each Chomper
+    void UpdateChomperTargets();
+
     // Lawnmower system methods
     void SpawnLawnmowers();
     void UpdateLawnmowers(float deltaTime);

@@ -17,6 +17,7 @@ set(SRC_FILES
     Plant/Repeater.cpp
     Plant/SnowPea.cpp
     Plant/PotatoMine.cpp
+    Plant/Chomper.cpp
 
     # Game Systems
     PlantType.cpp
@@ -71,6 +72,7 @@ set(INCLUDE_FILES
     Plant/Repeater.hpp
     Plant/SnowPea.hpp
     Plant/PotatoMine.hpp
+    Plant/Chomper.hpp
 
     # Game Systems
     PlantType.hpp

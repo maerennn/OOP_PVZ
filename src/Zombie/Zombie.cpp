@@ -30,6 +30,11 @@ void Zombie::Update(float deltaTime) {
             }
             break;
 
+        case State::JUMPING:
+            // Movement during jump is handled entirely by the subclass (PoleVaultZombie).
+            // Base class does nothing here so non-jumping zombies are unaffected.
+            break;
+
         case State::ATTACKING: {
             // Lock the weak_ptr — plant may have been removed by another system
             auto target = m_TargetPlant.lock();
@@ -138,6 +143,11 @@ void Zombie::ApplyChill(float duration) {
     LOG_DEBUG("{} chilled for {:.1f}s", m_Name, duration);
 }
 
+void Zombie::OnPlantEncountered(std::shared_ptr<Plant> plant) {
+    SetTargetPlant(plant);
+    SetState(State::ATTACKING);
+}
+
 void Zombie::SetState(State newState) {
     if (m_State == newState) return;
 
@@ -161,6 +171,10 @@ void Zombie::OnStateChanged(State newState) {
                 SetDrawable(m_CurrentAnimation);
                 m_WalkingAnimation->Play();
             }
+            break;
+
+        case State::JUMPING:
+            // Animation handled by subclass override; base does nothing.
             break;
 
         case State::ATTACKING:

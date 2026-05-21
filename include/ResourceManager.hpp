@@ -86,10 +86,11 @@ public:
     static constexpr const char* ZOMBIE_BUCKETHEAD_ATTACKING = "zombie.buckethead.attacking";
     static constexpr const char* ZOMBIE_BUCKETHEAD_DYING = "zombie.buckethead.dying";
     
-    static constexpr const char* ZOMBIE_POLEVAULT_WALKING = "zombie.polevault.walking";
-    static constexpr const char* ZOMBIE_POLEVAULT_ATTACKING = "zombie.polevault.attacking";
-    static constexpr const char* ZOMBIE_POLEVAULT_DYING = "zombie.polevault.dying";
-    static constexpr const char* ZOMBIE_POLEVAULT_JUMP = "zombie.polevault.jump";
+    static constexpr const char* ZOMBIE_POLEVAULT_WALKING      = "zombie.polevault.walking";
+    static constexpr const char* ZOMBIE_POLEVAULT_WALKING_SLOW = "zombie.polevault.walking_slow";
+    static constexpr const char* ZOMBIE_POLEVAULT_ATTACKING     = "zombie.polevault.attacking";
+    static constexpr const char* ZOMBIE_POLEVAULT_DYING         = "zombie.polevault.dying";
+    static constexpr const char* ZOMBIE_POLEVAULT_JUMP          = "zombie.polevault.jump";
 
     // Shared zombie animations
     static constexpr const char* ZOMBIE_CHARRED = "zombie.charred";  // Burnt by Cherry Bomb
@@ -106,6 +107,12 @@ public:
     static constexpr const char* PLANT_POTATOMINE_UNARMED  = "plant.potatomine.unarmed";
     static constexpr const char* PLANT_POTATOMINE_ARMING   = "plant.potatomine.arming";
     static constexpr const char* PLANT_POTATOMINE_ARMED    = "plant.potatomine.armed";
+
+    // Chomper animations
+    static constexpr const char* PLANT_CHOMPER_IDLE        = "plant.chomper.idle";
+    static constexpr const char* PLANT_CHOMPER_CAPTURE     = "plant.chomper.capture";
+    static constexpr const char* PLANT_CHOMPER_EATING      = "plant.chomper.eating";
+    static constexpr const char* PLANT_CHOMPER_EATING_DONE = "plant.chomper.eating_done";
 
     // Other game objects
     static constexpr const char* SUN_FLOATING = "sun.floating";

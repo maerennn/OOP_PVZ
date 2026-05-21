@@ -26,5 +26,6 @@
 #include "Plant/Repeater.hpp"
 #include "Plant/SnowPea.hpp"
 #include "Plant/PotatoMine.hpp"
+#include "Plant/Chomper.hpp"
 
 #endif // PLANTS_HPP

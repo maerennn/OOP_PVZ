@@ -35,6 +35,7 @@ public:
      */
     enum class State {
         WALKING,    // Moving toward the house
+        JUMPING,    // Mid-air (pole vault / leap)
         ATTACKING,  // Eating a plant
         DYING,      // Playing death animation
         CHARRED,    // Burnt by explosion (Cherry Bomb)
@@ -90,6 +91,20 @@ public:
      * @param deltaTime Time since last frame
      */
     virtual void Update(float deltaTime);
+
+    /**
+     * @brief Called when the zombie first contacts a plant while walking.
+     * Default: set target plant and switch to ATTACKING.
+     * Override (e.g. PoleVaultZombie) to jump instead.
+     */
+    virtual void OnPlantEncountered(std::shared_ptr<Plant> plant);
+
+    /**
+     * @brief Y-axis offset (OpenGL units) applied on spawn to align the sprite
+     * with its lane.  Override when the zombie's visual centre is not at the
+     * geometric centre of its canvas.  Positive = shift up on screen.
+     */
+    virtual float GetSpriteYOffset() const { return 0.0f; }
 
     /**
      * @brief Apply damage to the zombie.
