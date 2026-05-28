@@ -8,12 +8,13 @@
 #include "Util/Color.hpp"
 #include "ResourceManager.hpp"
 #include "LevelManager.hpp"
+#include "SeedPacketDrop.hpp"
 #include "Sun.hpp"
 #include "Pea.hpp"
 #include "FrozenPea.hpp"
 #include "Zombie/NormalZombie.hpp"
-#include "Zombie/ConeheadZombie.hpp"
-#include "Zombie/BucketheadZombie.hpp"
+#include "Zombie/ConeheadArmor.hpp"
+#include "Zombie/BucketheadArmor.hpp"
 #include "Zombie/PoleVaultZombie.hpp"
 #include "Plant/Sunflower.hpp"
 #include "Plant/ShooterPlant.hpp"
@@ -139,32 +140,46 @@ void App::LevelSelect() {
         m_Root.AddChild(bg);
         m_LevelSelectObjects.push_back(bg);
 
+        // ── Layout constants ─────────────────────────────────────────
+        // Window: 800 × 600, origin at centre → y range [-300, +300]
+        constexpr float TOP       = 255.0f;   // title
+        constexpr float SUBTITLE  = 200.0f;
+        constexpr float ROW_START = 143.0f;   // first level entry
+        constexpr float ROW_STEP  = -48.0f;   // gap between rows
+        constexpr float HINT_Y    = -248.0f;  // key-hint line at bottom
+
         // Title
         addText("Plants vs. Zombies",
-                48, {0.0f, 220.0f}, Util::Color(255, 220, 0, 255), 1.0f);
+                38, {0.0f, TOP}, Util::Color(255, 220, 0, 255), 1.0f);
 
         // Subtitle
-        addText("Select a Level:",
-                28, {0.0f, 130.0f}, Util::Color(255, 255, 255, 255), 1.0f);
+        addText("Select a Level",
+                22, {0.0f, SUBTITLE}, Util::Color(255, 255, 255, 255), 1.0f);
 
-        // Level entries
+        // Level entries  (ROW_START, then -48 each)
+        const Util::Color cBasic  = {200, 255, 200, 255};
+        const Util::Color cAdv    = {180, 220, 255, 255};
+
         addText("[1]  Level 1-1   1 lane    Tutorial",
-                24, {0.0f,  50.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+                20, {0.0f, ROW_START + 0 * ROW_STEP}, cBasic, 1.0f);
         addText("[2]  Level 1-2   3 lanes   Beginner",
-                24, {0.0f,  -5.0f}, Util::Color(200, 255, 200, 255), 1.0f);
-        addText("[3]  Level 1-3   4 lanes   Intermediate",
-                24, {0.0f, -60.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+                20, {0.0f, ROW_START + 1 * ROW_STEP}, cBasic, 1.0f);
+        addText("[3]  Level 1-3   3 lanes   Intermediate",
+                20, {0.0f, ROW_START + 2 * ROW_STEP}, cBasic, 1.0f);
         addText("[4]  Level 1-4   5 lanes   Day 1",
-                24, {0.0f,-115.0f}, Util::Color(200, 255, 200, 255), 1.0f);
+                20, {0.0f, ROW_START + 3 * ROW_STEP}, cBasic, 1.0f);
         addText("[6]  Level 1-6   5 lanes   Pole Vaulter Debut",
-                24, {0.0f,-170.0f}, Util::Color(200, 230, 255, 255), 1.0f);
-        addText("[7]  Level 1-7   5 lanes   Pole Vaulter Debut",
-                24, {0.0f,-225.0f}, Util::Color(200, 230, 255, 255), 1.0f);
+                20, {0.0f, ROW_START + 4 * ROW_STEP}, cAdv,   1.0f);
+        addText("[7]  Level 1-7   5 lanes   The Vaulter's Arrival",
+                20, {0.0f, ROW_START + 5 * ROW_STEP}, cAdv,   1.0f);
         addText("[8]  Level 1-8   5 lanes   Bucket Brigade",
-                24, {0.0f,-280.0f}, Util::Color(200, 230, 255, 255), 1.0f);
-        // Instructions
-        addText("Press  1 / 2 / 3 / 4 / 6 / 7 /8 to begin",
-                20, {0.0f,-335.0f}, Util::Color(180, 180, 180, 255), 1.0f);
+                20, {0.0f, ROW_START + 6 * ROW_STEP}, cAdv,   1.0f);
+        addText("[9]  Level 1-9   5 lanes   All Hands on Deck",
+                20, {0.0f, ROW_START + 7 * ROW_STEP}, cAdv,   1.0f);
+
+        // Key hint at the bottom
+        addText("Press 1 / 2 / 3 / 4 / 6 / 7 / 8 / 9 to begin   |   ESC to quit",
+                16, {0.0f, HINT_Y}, Util::Color(160, 160, 160, 255), 1.0f);
 
         m_LevelSelectInitialized = true;
         LOG_DEBUG("LevelSelect: screen initialised");
@@ -191,6 +206,9 @@ void App::LevelSelect() {
         m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_8)) {
         m_SelectedLevel = 8;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_9)) {
+        m_SelectedLevel = 9;
         m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
                Util::Input::IfExit()) {
@@ -228,6 +246,9 @@ void App::Start() {
     // ── Load level configuration ────────────────────────────────────────
     auto config    = LevelManager::CreateLevel(m_SelectedLevel);
     m_ActiveLanes  = config.activeLanes;
+    m_LevelRewardPlant = config.rewardPlant;
+    m_NextLevelNum     = config.nextLevelNum;
+    m_RewardDropActive = false;
     LOG_DEBUG("App::Start: Level {} selected, {} active lanes",
               m_SelectedLevel, m_ActiveLanes.size());
 
@@ -412,6 +433,14 @@ void App::Update() {
     CheckGameOver();  // Check if zombie reached the house
     if (m_GameOver) return;  // Early exit if game just ended
 
+    // ── Reward drop: wait for player to click the end-of-level packet ───
+    if (m_RewardDropActive) {
+        m_RewardDrop->Update(deltaTime);
+        CheckRewardCollection();
+        m_Root.Update();
+        return;
+    }
+
     // ── Check Zombie-Plant Collisions ───────────────────────────────────
     // Chomper detection runs first so approaching zombies are killed before
     // they can transition to ATTACKING via OnPlantEncountered().
@@ -506,6 +535,13 @@ void App::CleanupGame() {
     // Remove any lingering result overlay
     for (auto& o : m_ResultObjects) m_Root.RemoveChild(o);
     m_ResultObjects.clear();
+
+    // Remove any lingering reward drop
+    if (m_RewardDrop) {
+        m_Root.RemoveChild(m_RewardDrop);
+        m_RewardDrop.reset();
+    }
+    m_RewardDropActive = false;
 }
 
 void App::ShowResultOverlay(bool won) {
@@ -548,7 +584,8 @@ void App::PlacePlant(PlantType type, int row, int col) {
     // Position the plant
     plant->SetZIndex(GameConfig::ZIndex::PLANT);
     plant->SetGridPosition(row, col);
-    plant->m_Transform.translation = GameConfig::CellToPosition(row, col);
+    plant->m_Transform.translation = GameConfig::CellToPosition(row, col)
+                                   + PlantRegistry::Get(type).spriteOffset;
 
     // ── Wire up Sunflower callback ──────────────────────────────────────
     if (type == PlantType::SUNFLOWER) {
@@ -823,9 +860,18 @@ void App::UpdateShooterTargets() {
 // ══════════════════════════════════════════════════════════════════════════
 
 void App::UpdateChomperTargets() {
-    // For each Chomper in the grid, find the closest WALKING or ATTACKING
-    // zombie within CHOMPER_RANGE to its right in the same row and offer it
-    // as a target. SetNearestZombie() is a no-op when the Chomper is not IDLE.
+    // Chomper grab logic (tile-based):
+    //   No plant in col+1 (directly in front): snap zombie entering col+1 (1 tile in front).
+    //   Plant  in col+1:                       reach over it and snap zombie in col+2
+    //                                          (2 tiles in front = in front of the blocking plant).
+    //
+    // Detection window uses raw grid tile bounds (GRID_ORIGIN_X), so sprite offsets
+    // do not affect the range calculation.
+
+    static constexpr float CELL      = GameConfig::CELL_WIDTH;
+    static constexpr float ENTRY_BUF = CELL * 0.25f;  // right-side buffer: catch zombie just entering tile
+    static constexpr float LEFT_TOL  = CELL * 0.5f;   // left-side tolerance (no-plant case only):
+                                                       //  also catch zombie that reached Chomper's tile
 
     for (int r = 0; r < GameConfig::GRID_ROWS; ++r) {
         for (int c = 0; c < GameConfig::GRID_COLS; ++c) {
@@ -835,34 +881,44 @@ void App::UpdateChomperTargets() {
             auto chomper = std::dynamic_pointer_cast<Chomper>(plant);
             if (!chomper) continue;
 
-            // Only bother scanning if this Chomper is IDLE
             if (chomper->GetChomperState() != Chomper::ChomperState::IDLE) continue;
 
-            const float chomperX = plant->m_Transform.translation.x;
+            // Determine target column based on whether col+1 has a plant
+            const bool hasFrontPlant = (c + 1 < GameConfig::GRID_COLS) &&
+                                       (m_PlantGrid[r][c + 1] != nullptr);
+            const int targetCol = c + (hasFrontPlant ? 2 : 1);
+            if (targetCol >= GameConfig::GRID_COLS) continue;
+
+            // Tile X bounds for the target column (grid coordinates, no sprite offset)
+            const float tileLeft  = GameConfig::GRID_ORIGIN_X + targetCol * CELL;
+            const float tileRight = tileLeft + CELL;
+
+            // Detection window:
+            //   right: tileRight + ENTRY_BUF  — catches a zombie just entering from the right
+            //   left:  tileLeft  (plant case)  — strictly col+2, never fires on col+1
+            //          tileLeft - LEFT_TOL (no-plant case) — also catches zombie on Chomper's tile
+            const float detectRight = tileRight + ENTRY_BUF;
+            const float detectLeft  = hasFrontPlant ? tileLeft : (tileLeft - LEFT_TOL);
+            const float tileCenterX = tileLeft + CELL * 0.5f;
 
             std::shared_ptr<Zombie> nearest;
-            float nearestDist = Chomper::CHOMPER_RANGE + 1.0f;  // sentinel
+            float nearestDist = detectRight - detectLeft + 1.0f;  // sentinel
 
             for (const auto& zombie : m_Zombies) {
                 if (zombie->GetRow() != r) continue;
                 if (zombie->IsDead()) continue;
 
+                // Grab any non-dead zombie — WALKING or ATTACKING both count.
                 const Zombie::State zs = zombie->GetState();
                 if (zs != Zombie::State::WALKING && zs != Zombie::State::ATTACKING) continue;
 
-                const float zx   = zombie->m_Transform.translation.x;
-                // Use a half-cell tolerance on the left so a zombie that
-                // has already reached the Chomper's tile is still caught.
-                const float dist = zx - chomperX;
-                static constexpr float LEFT_TOLERANCE = GameConfig::CELL_WIDTH * 0.5f;
+                const float zx = zombie->m_Transform.translation.x;
+                if (zx < detectLeft || zx > detectRight) continue;
 
-                if (dist >= -LEFT_TOLERANCE && dist <= Chomper::CHOMPER_RANGE) {
-                    // Rank by absolute distance so the closest zombie wins
-                    const float absDist = std::abs(dist);
-                    if (absDist < nearestDist) {
-                        nearestDist = absDist;
-                        nearest     = zombie;
-                    }
+                const float absDist = std::abs(zx - tileCenterX);
+                if (absDist < nearestDist) {
+                    nearestDist = absDist;
+                    nearest     = zombie;
                 }
             }
 
@@ -890,12 +946,18 @@ void App::SpawnZombie(ZombieType type, int lane) {
         case ZombieType::NORMAL:
             zombie = std::make_shared<NormalZombie>();
             break;
-        case ZombieType::CONEHEAD:
-            zombie = std::make_shared<ConeheadZombie>();
+        case ZombieType::CONEHEAD: {
+            auto z = std::make_shared<NormalZombie>();
+            z->EquipArmor(std::make_unique<ConeheadArmor>());
+            zombie = z;
             break;
-        case ZombieType::BUCKETHEAD:
-            zombie = std::make_shared<BucketheadZombie>();
+        }
+        case ZombieType::BUCKETHEAD: {
+            auto z = std::make_shared<NormalZombie>();
+            z->EquipArmor(std::make_unique<BucketheadArmor>());
+            zombie = z;
             break;
+        }
         case ZombieType::POLEVAULT:
             zombie = std::make_shared<PoleVaultZombie>();
             break;
@@ -926,6 +988,7 @@ void App::UpdateZombies(float deltaTime) {
     auto it = std::remove_if(m_Zombies.begin(), m_Zombies.end(),
         [this](const std::shared_ptr<Zombie>& zombie) {
             if (zombie->ShouldRemove()) {
+                m_LastZombieDeathPos = zombie->m_Transform.translation;
                 m_Root.RemoveChild(zombie);
                 m_WaveManager->OnZombieKilled();
                 return true;
@@ -1006,10 +1069,28 @@ void App::RemoveDeadPlants() {
 void App::CheckGameOver() {
     // ── Win condition: all waves done and battlefield clear ─────────────
     if (m_WaveManager->IsLevelComplete() && m_Zombies.empty()) {
-        m_GameOver = true;
-        m_GameWon  = true;
-        ShowResultOverlay(true);
-        LOG_INFO("Level complete! All waves cleared.");
+        // Guard: don't re-trigger if we're already showing the drop.
+        if (m_RewardDropActive) return;
+
+        if (m_LevelRewardPlant.has_value()) {
+            // Clamp the drop to a reasonable on-screen position.
+            glm::vec2 dropPos = m_LastZombieDeathPos;
+            dropPos.x = std::max(GameConfig::GRID_ORIGIN_X + 50.0f,
+                         std::min(dropPos.x, GameConfig::GRID_RIGHT  - 50.0f));
+            dropPos.y = std::max(GameConfig::GRID_BOTTOM + 40.0f,
+                         std::min(dropPos.y, GameConfig::GRID_ORIGIN_Y - 40.0f));
+
+            SpawnRewardDrop(*m_LevelRewardPlant, dropPos);
+            m_RewardDropActive = true;
+            LOG_INFO("Level clear! Reward drop spawned at ({}, {}).",
+                     dropPos.x, dropPos.y);
+        } else {
+            // No reward — go straight to the win screen.
+            m_GameOver = true;
+            m_GameWon  = true;
+            ShowResultOverlay(true);
+            LOG_INFO("Level complete! All waves cleared.");
+        }
         return;
     }
 
@@ -1028,6 +1109,46 @@ void App::CheckGameOver() {
             LOG_INFO("Game over! Zombie reached the house.");
             return;
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Reward Drop System
+// ══════════════════════════════════════════════════════════════════════════
+
+void App::SpawnRewardDrop(PlantType type, glm::vec2 position) {
+    m_RewardDrop = std::make_shared<SeedPacketDrop>(type, position);
+    m_RewardDrop->Initialize();
+    m_Root.AddChild(m_RewardDrop);
+}
+
+void App::CheckRewardCollection() {
+    if (!m_RewardDropActive || !m_RewardDrop) return;
+    if (!Util::Input::IsKeyUp(Util::Keycode::MOUSE_LB)) return;
+
+    glm::vec2 cursor = Util::Input::GetCursorPosition();
+    if (!m_RewardDrop->IsClicked(cursor)) return;
+
+    PlantType unlocked = m_RewardDrop->GetPlantType();
+    LOG_INFO("Reward collected: {} — unlocking for next session.",
+             PlantRegistry::Get(unlocked).name);
+
+    // Track unlock in session storage
+    m_UnlockedPlants.push_back(unlocked);
+
+    // Remove the drop from the scene
+    m_Root.RemoveChild(m_RewardDrop);
+    m_RewardDrop.reset();
+    m_RewardDropActive = false;
+
+    // Transition: load next level or show win screen
+    if (m_NextLevelNum > 0) {
+        m_SelectedLevel = m_NextLevelNum;
+        m_CurrentState  = State::START;
+    } else {
+        m_GameOver = true;
+        m_GameWon  = true;
+        ShowResultOverlay(true);
     }
 }
 

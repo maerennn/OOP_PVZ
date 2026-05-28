@@ -2,6 +2,7 @@
 #define RESOURCE_MANAGER_HPP
 
 #include "Util/Animation.hpp"
+#include "Util/Image.hpp"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -64,6 +65,15 @@ public:
         bool playImmediately = true);
 
     /**
+     * @brief Retrieve a pre-loaded static image from the cache.
+     * The image was uploaded to VRAM during Initialize(), so this call
+     * is free of disk I/O and GPU work — safe to call every frame.
+     * @param key A registered image key (use the ARMOR_* constants).
+     * @return Cached Image, or nullptr if the key was never registered.
+     */
+    std::shared_ptr<Util::Image> GetImage(const std::string& key) const;
+
+    /**
      * @brief Check if an animation is registered.
      */
     bool HasAnimation(const std::string& animationName) const;
@@ -78,14 +88,6 @@ public:
     static constexpr const char* ZOMBIE_BASIC_STANDING = "zombie.basic.standing";
     static constexpr const char* ZOMBIE_BASIC_DYING = "zombie.basic.dying";
     
-    static constexpr const char* ZOMBIE_CONEHEAD_WALKING = "zombie.conehead.walking";
-    static constexpr const char* ZOMBIE_CONEHEAD_ATTACKING = "zombie.conehead.attacking";
-    static constexpr const char* ZOMBIE_CONEHEAD_DYING = "zombie.conehead.dying";
-    
-    static constexpr const char* ZOMBIE_BUCKETHEAD_WALKING = "zombie.buckethead.walking";
-    static constexpr const char* ZOMBIE_BUCKETHEAD_ATTACKING = "zombie.buckethead.attacking";
-    static constexpr const char* ZOMBIE_BUCKETHEAD_DYING = "zombie.buckethead.dying";
-    
     static constexpr const char* ZOMBIE_POLEVAULT_WALKING      = "zombie.polevault.walking";
     static constexpr const char* ZOMBIE_POLEVAULT_WALKING_SLOW = "zombie.polevault.walking_slow";
     static constexpr const char* ZOMBIE_POLEVAULT_ATTACKING     = "zombie.polevault.attacking";
@@ -94,6 +96,14 @@ public:
 
     // Shared zombie animations
     static constexpr const char* ZOMBIE_CHARRED = "zombie.charred";  // Burnt by Cherry Bomb
+
+    // Armor overlay sprites (static images, not animations)
+    static constexpr const char* ARMOR_CONE_1   = "armor.cone.1";
+    static constexpr const char* ARMOR_CONE_2   = "armor.cone.2";
+    static constexpr const char* ARMOR_CONE_3   = "armor.cone.3";
+    static constexpr const char* ARMOR_BUCKET_1 = "armor.bucket.1";
+    static constexpr const char* ARMOR_BUCKET_2 = "armor.bucket.2";
+    static constexpr const char* ARMOR_BUCKET_3 = "armor.bucket.3";
 
     // Plant animations
     static constexpr const char* PLANT_SUNFLOWER_IDLE      = "plant.sunflower.idle";
@@ -130,6 +140,11 @@ private:
                            bool looping = true);
 
     /**
+     * @brief Pre-load a single static image into VRAM and cache it under key.
+     */
+    void RegisterImage(const std::string& key, const std::string& path);
+
+    /**
      * @brief Helper to generate numbered frame paths.
      */
     static std::vector<std::string> GenerateFramePaths(
@@ -138,7 +153,8 @@ private:
         int endFrame);
 
     // Cache storage
-    std::unordered_map<std::string, AnimationData> m_AnimationCache;
+    std::unordered_map<std::string, AnimationData>                m_AnimationCache;
+    std::unordered_map<std::string, std::shared_ptr<Util::Image>> m_ImageCache;
     bool m_Initialized = false;
 };
 

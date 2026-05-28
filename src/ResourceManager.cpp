@@ -61,64 +61,6 @@ void ResourceManager::Initialize() {
         false  // plays once then stops
     );
 
-    // ── Conehead Zombie ─────────────────────────────────────────────────────
-    RegisterAnimation(
-        ZOMBIE_CONEHEAD_WALKING,
-        GenerateFramePaths(
-            RESOURCE_DIR "/zombies/Conehead/Walking/conehead%04d.png",
-            46, 137),
-        50,
-        true
-    );
-
-    RegisterAnimation(
-        ZOMBIE_CONEHEAD_ATTACKING,
-        GenerateFramePaths(
-            RESOURCE_DIR "/zombies/Conehead/Attacking/conehead%04d.png",
-            138, 178),
-        50,
-        true
-    );
-
-    // Conehead uses same dying animation as basic zombie (loses cone when damaged)
-    RegisterAnimation(
-        ZOMBIE_CONEHEAD_DYING,
-        GenerateFramePaths(
-            RESOURCE_DIR "/zombies/SharedNoHead/Dead/basiczombie%04d.png",
-            179, 217),
-        50,
-        false
-    );
-
-    // ── Buckethead Zombie ───────────────────────────────────────────────────
-    RegisterAnimation(
-        ZOMBIE_BUCKETHEAD_WALKING,
-        GenerateFramePaths(
-            RESOURCE_DIR "/zombies/Buckethead/Walking/buckethead%04d.png",
-            45, 137),
-        50,
-        true
-    );
-
-    RegisterAnimation(
-        ZOMBIE_BUCKETHEAD_ATTACKING,
-        GenerateFramePaths(
-            RESOURCE_DIR "/zombies/Buckethead/Attacking/buckethead%04d.png",
-            138, 178),
-        50,
-        true
-    );
-
-    // Buckethead uses same dying animation as basic zombie
-    RegisterAnimation(
-        ZOMBIE_BUCKETHEAD_DYING,
-        GenerateFramePaths(
-            RESOURCE_DIR "/zombies/SharedNoHead/Dead/basiczombie%04d.png",
-            179, 217),
-        50,
-        false
-    );
-
     // ── Pole Vaulter Zombie ─────────────────────────────────────────────────
     RegisterAnimation(
         ZOMBIE_POLEVAULT_WALKING,
@@ -355,8 +297,19 @@ void ResourceManager::Initialize() {
         true
     );
 
+    // ══════════════════════════════════════════════════════════════════════
+    // ARMOR OVERLAY SPRITES (static images, pre-loaded to avoid spawn stutter)
+    // ══════════════════════════════════════════════════════════════════════
+    RegisterImage(ARMOR_CONE_1,   RESOURCE_DIR "/zombies/Conehead/Zombie_cone1.png");
+    RegisterImage(ARMOR_CONE_2,   RESOURCE_DIR "/zombies/Conehead/Zombie_cone2.png");
+    RegisterImage(ARMOR_CONE_3,   RESOURCE_DIR "/zombies/Conehead/Zombie_cone3.png");
+    RegisterImage(ARMOR_BUCKET_1, RESOURCE_DIR "/zombies/Buckethead/Zombie_bucket1.png");
+    RegisterImage(ARMOR_BUCKET_2, RESOURCE_DIR "/zombies/Buckethead/Zombie_bucket2.png");
+    RegisterImage(ARMOR_BUCKET_3, RESOURCE_DIR "/zombies/Buckethead/Zombie_bucket3.png");
+
     m_Initialized = true;
-    LOG_DEBUG("ResourceManager: Cached {} animations", m_AnimationCache.size());
+    LOG_DEBUG("ResourceManager: Cached {} animations, {} images",
+              m_AnimationCache.size(), m_ImageCache.size());
 }
 
 std::shared_ptr<Util::Animation> ResourceManager::CreateAnimation(
@@ -384,6 +337,20 @@ std::shared_ptr<Util::Animation> ResourceManager::CreateAnimation(
 
 bool ResourceManager::HasAnimation(const std::string& animationName) const {
     return m_AnimationCache.find(animationName) != m_AnimationCache.end();
+}
+
+std::shared_ptr<Util::Image> ResourceManager::GetImage(const std::string& key) const {
+    auto it = m_ImageCache.find(key);
+    if (it == m_ImageCache.end()) {
+        LOG_ERROR("ResourceManager: Image '{}' not found!", key);
+        return nullptr;
+    }
+    return it->second;
+}
+
+void ResourceManager::RegisterImage(const std::string& key, const std::string& path) {
+    m_ImageCache[key] = std::make_shared<Util::Image>(path);
+    LOG_DEBUG("ResourceManager: Registered image '{}'", key);
 }
 
 void ResourceManager::RegisterAnimation(const std::string& name,

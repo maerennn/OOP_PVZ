@@ -2,6 +2,7 @@
 #include "GameConfig.hpp"
 #include "ResourceManager.hpp"
 #include "Util/Logger.hpp"
+#include "Util/Image.hpp"
 #include "Plant/Plant.hpp"
 
 Zombie::Zombie(const std::string& name, int health, float speed, int damage)
@@ -97,6 +98,17 @@ void Zombie::Update(float deltaTime) {
             break;
     }
 
+    // Sync armor overlay world-position to follow this zombie every frame.
+    // The PTSD renderer does NOT propagate parent transforms to children,
+    // so we must set the child's world transform manually.
+    if (m_ArmorOverlay && m_Armor) {
+        m_ArmorOverlay->m_Transform.translation = {
+            m_Transform.translation.x + m_Armor->GetOverlayXOffset(),
+            m_Transform.translation.y + m_Armor->GetOverlayYOffset()
+        };
+        m_ArmorOverlay->m_Transform.scale = m_Transform.scale * 4.0f;
+    }
+
     // Tick chill timer
     if (m_ChillTimer > 0.0f) {
         m_ChillTimer -= deltaTime;
@@ -106,32 +118,118 @@ void Zombie::Update(float deltaTime) {
 
 void Zombie::TakeDamage(int amount) {
     if (m_State == State::DEAD || m_State == State::DYING || m_State == State::CHARRED) {
-        return;  // Can't damage dead/dying zombies
+        return;
     }
 
-    m_Health -= amount;
-    LOG_DEBUG("{} took {} damage, health: {}/{}", m_Name, amount, m_Health, m_MaxHealth);
+    // ── Route damage through armor first ──────────────────────────────────
+    int baseAmount = amount;
+    if (m_Armor) {
+        Armor::DegradationState stateBefore = m_Armor->GetState();
+        baseAmount = m_Armor->TakeDamage(amount);
 
-    if (m_Health <= 0) {
-        m_Health = 0;
-        m_DeathType = DeathType::NORMAL;
-        SetState(State::DYING);
+        if (m_Armor->IsDestroyed()) {
+            LOG_DEBUG("{} armor destroyed (overflow {} dmg)", m_Name, baseAmount);
+            OnArmorDestroyed();
+        } else if (m_Armor->GetState() != stateBefore) {
+            OnArmorStateChanged(m_Armor->GetState());
+        }
+    }
+
+    // ── Apply overflow (or full damage if unarmed) to base HP ─────────────
+    if (baseAmount > 0) {
+        m_Health -= baseAmount;
+        LOG_DEBUG("{} took {} base damage, health: {}/{}", m_Name, baseAmount, m_Health, m_MaxHealth);
+
+        if (m_Health <= 0) {
+            m_Health = 0;
+            m_DeathType = DeathType::NORMAL;
+            SetState(State::DYING);
+        }
     }
 }
 
 void Zombie::TakeExplosionDamage(int amount) {
     if (m_State == State::DEAD || m_State == State::DYING || m_State == State::CHARRED) {
-        return;  // Can't damage dead/dying zombies
+        return;
     }
 
-    m_Health -= amount;
-    LOG_DEBUG("{} took {} EXPLOSION damage, health: {}/{}", m_Name, amount, m_Health, m_MaxHealth);
+    // ── Route through armor first (explosion ignores armor less efficiently) ─
+    int baseAmount = amount;
+    if (m_Armor) {
+        Armor::DegradationState stateBefore = m_Armor->GetState();
+        baseAmount = m_Armor->TakeDamage(amount);
 
-    if (m_Health <= 0) {
-        m_Health = 0;
-        m_DeathType = DeathType::EXPLOSION;
-        SetState(State::CHARRED);
+        if (m_Armor->IsDestroyed()) {
+            OnArmorDestroyed();
+        } else if (m_Armor->GetState() != stateBefore) {
+            OnArmorStateChanged(m_Armor->GetState());
+        }
     }
+
+    if (baseAmount > 0) {
+        m_Health -= baseAmount;
+        LOG_DEBUG("{} took {} EXPLOSION base damage, health: {}/{}", m_Name, baseAmount, m_Health, m_MaxHealth);
+
+        if (m_Health <= 0) {
+            m_Health = 0;
+            m_DeathType = DeathType::EXPLOSION;
+            SetState(State::CHARRED);
+        }
+    }
+}
+
+// ── EquipArmor ─────────────────────────────────────────────────────────────
+
+void Zombie::EquipArmor(std::unique_ptr<Armor> armor) {
+    // Remove any existing overlay from the child list
+    if (m_ArmorOverlay) {
+        RemoveChild(m_ArmorOverlay);
+        m_ArmorOverlay.reset();
+    }
+
+    m_Armor = std::move(armor);
+
+    if (!m_Armor) return;
+
+    // Build the overlay child — starts with the INTACT sprite
+    const std::string key = m_Armor->GetCurrentSpritePath();
+    if (!key.empty()) {
+        auto image = ResourceManager::GetInstance().GetImage(key);
+        m_ArmorOverlay = std::make_shared<Util::GameObject>(
+            image,
+            GetZIndex() + 0.1f  // render just above the zombie body
+        );
+        AddChild(m_ArmorOverlay);
+    }
+
+    m_LastArmorState = m_Armor->GetState();
+    LOG_DEBUG("{} equipped armor ({} HP)", m_Name, m_Armor->GetMaxHealth());
+}
+
+// ── Armor event hooks ──────────────────────────────────────────────────────
+
+void Zombie::OnArmorStateChanged(Armor::DegradationState newState) {
+    if (!m_Armor || !m_ArmorOverlay) return;
+
+    const std::string key = m_Armor->GetCurrentSpritePath();
+    if (!key.empty()) {
+        auto image = ResourceManager::GetInstance().GetImage(key);
+        if (image) {
+            m_ArmorOverlay->SetDrawable(image);
+            LOG_DEBUG("{} armor sprite updated (state {})", m_Name, static_cast<int>(newState));
+        }
+    }
+}
+
+void Zombie::OnArmorDestroyed() {
+    // Hide the overlay — zombie body continues its current animation uninterrupted
+    if (m_ArmorOverlay) {
+        m_ArmorOverlay->SetVisible(false);
+    }
+    // Release the armor component
+    m_Armor.reset();
+
+    LOG_DEBUG("{} armor destroyed — reverting to basic sprite", m_Name);
 }
 
 void Zombie::ApplyChill(float duration) {

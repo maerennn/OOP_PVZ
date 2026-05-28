@@ -4,6 +4,7 @@
 #include "ZombieType.hpp"
 #include "PlantType.hpp"
 #include <vector>
+#include <optional>
 
 /**
  * @brief Per-level configuration passed to App::Start() and WaveManager.
@@ -25,6 +26,13 @@ struct LevelConfig {
 
     /** All wave definitions for this level. */
     LevelData              zombieWaves;
+
+    // ── End-of-level reward ────────────────────────────────────────────
+    /** Plant unlocked when the final zombie dies (nullopt = no reward). */
+    std::optional<PlantType> rewardPlant;
+
+    /** Level number to load after collecting the reward (0 = show win screen). */
+    int nextLevelNum = 0;
 };
 
 /**
@@ -53,6 +61,7 @@ public:
     static LevelConfig CreateLevel1_6();  ///< Pole Vaulter debut: 5 lanes, 10 waves
     static LevelConfig CreateLevel1_7();  ///< The Vaulter's Arrival: 5 lanes, 20 waves, all three zombie types
     static LevelConfig CreateLevel1_8();  ///< Bucket Brigade: 5 lanes, 10 waves, Buckethead debut
+    static LevelConfig CreateLevel1_9();  ///< All Hands on Deck: 5 lanes, 20 waves, all four zombie types
 };
 
 #endif // LEVEL_MANAGER_HPP

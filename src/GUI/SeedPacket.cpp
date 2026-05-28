@@ -33,7 +33,7 @@ void SeedPacket::CreateComponents() {
     m_PlantIcon = std::make_shared<Util::GameObject>();
     auto iconImage = std::make_shared<Util::Image>(info.iconPath);
     m_PlantIcon->SetDrawable(iconImage);
-    m_PlantIcon->m_Transform.translation = {0.0f, 8.0f};  // Slightly up
+    m_PlantIcon->m_Transform.translation = glm::vec2{0.0f, 8.0f} + info.iconOffset;
     m_PlantIcon->m_Transform.scale = {0.2f, 0.2f};  // Scale icon to fit packet
     m_PlantIcon->SetZIndex(0.1f);
 

@@ -123,7 +123,9 @@ static const PlantInfo s_PlantInfo[] = {
             auto plant = std::make_shared<Chomper>();
             plant->Initialize(CHOMPER_DIR);
             return plant;
-        }
+        },
+        {30.0f, 30.0f},   // spriteOffset: nudge in-game sprite (x, y) — tune as needed
+        {35.0f, 25.0f},   // iconOffset:   nudge seed packet icon (x, y) — tune as needed
     }
 };
 

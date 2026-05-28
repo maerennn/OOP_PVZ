@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <glm/glm.hpp>
 
 class Plant;
 
@@ -34,6 +35,8 @@ struct PlantInfo {
     std::string iconPath;       // Path to icon image for seed packet
     std::string animationDir;   // Path to animation frames directory
     std::function<std::shared_ptr<Plant>()> factory;  // Creates plant instance
+    glm::vec2 spriteOffset = {0.0f, 0.0f};  // Applied to in-game grid placement (x/y nudge)
+    glm::vec2 iconOffset   = {0.0f, 0.0f};  // Applied to seed packet icon (x/y nudge)
 };
 
 /**

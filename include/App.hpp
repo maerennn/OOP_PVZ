@@ -20,8 +20,10 @@
 #include "WaveManager.hpp"
 #include "GUI/ProgressBar.hpp"
 #include "LevelManager.hpp"
+#include "SeedPacketDrop.hpp"
 #include <memory>
 #include <vector>
+#include <optional>
 
 class App {
 public:
@@ -74,6 +76,10 @@ private:
     // Explosion system methods
     void HandleCherryBombExplosion(int centerRow, int centerCol, int damage);
     void HandlePotatoMineExplosion(int centerRow, int centerCol, int damage);
+
+    // Reward drop system
+    void SpawnRewardDrop(PlantType type, glm::vec2 position);
+    void CheckRewardCollection();
 
     State m_CurrentState = State::BOOT;
 
@@ -130,6 +136,16 @@ private:
     void CheckGameOver();
     void CleanupGame();
     void ShowResultOverlay(bool won);
+
+    // ── End-of-level reward drop ─────────────────────────────────────────
+    bool                           m_RewardDropActive = false;
+    std::optional<PlantType>       m_LevelRewardPlant;       ///< reward for current level
+    int                            m_NextLevelNum     = 0;   ///< 0 = no next level
+    glm::vec2                      m_LastZombieDeathPos = {0.0f, 0.0f};
+    std::shared_ptr<SeedPacketDrop> m_RewardDrop;
+
+    // ── Unlocked plants (session-persistent) ────────────────────────────
+    std::vector<PlantType> m_UnlockedPlants;
 
     // Result overlay objects (shown on win/loss, removed on return to menu)
     std::vector<std::shared_ptr<Util::GameObject>> m_ResultObjects;

@@ -24,6 +24,7 @@ set(SRC_FILES
     SunManager.cpp
     PlantingSystem.cpp
     Sun.cpp
+    SeedPacketDrop.cpp
     Projectile.cpp
     Pea.cpp
     FrozenPea.cpp
@@ -32,10 +33,11 @@ set(SRC_FILES
     LevelManager.cpp
 
     # Zombie System
+    Zombie/Armor.cpp
+    Zombie/ConeheadArmor.cpp
+    Zombie/BucketheadArmor.cpp
     Zombie/Zombie.cpp
     Zombie/NormalZombie.cpp
-    Zombie/ConeheadZombie.cpp
-    Zombie/BucketheadZombie.cpp
     Zombie/PoleVaultZombie.cpp
 
     # Lawnmower System
@@ -79,6 +81,7 @@ set(INCLUDE_FILES
     SunManager.hpp
     PlantingSystem.hpp
     Sun.hpp
+    SeedPacketDrop.hpp
     Projectile.hpp
     Pea.hpp
     FrozenPea.hpp
@@ -87,10 +90,11 @@ set(INCLUDE_FILES
     WaveManager.hpp
 
     # Zombie System
+    Zombie/Armor.hpp
+    Zombie/ConeheadArmor.hpp
+    Zombie/BucketheadArmor.hpp
     Zombie/Zombie.hpp
     Zombie/NormalZombie.hpp
-    Zombie/ConeheadZombie.hpp
-    Zombie/BucketheadZombie.hpp
     Zombie/PoleVaultZombie.hpp
 
     # Lawnmower System

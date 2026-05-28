@@ -22,9 +22,7 @@ void Chomper::Initialize(const std::string& /*frameDirectory*/) {
 
     SetDrawable(m_IdleAnim);
     m_Transform.scale = {0.25f, 0.25f};
-    // Shift the sprite downward so the plant base sits on the tile ground line.
-    // Adjust this offset if the sprite still appears too high or too low.
-    m_Transform.translation.y -= 10.0f;
+
 
     LOG_DEBUG("Chomper initialized and in IDLE state");
 }

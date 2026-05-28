@@ -9,6 +9,7 @@ LevelConfig LevelManager::CreateLevel(int levelNum) {
         case 6:  return CreateLevel1_6();
         case 7:  return CreateLevel1_7();
         case 8:  return CreateLevel1_8();
+        case 9:  return CreateLevel1_9();
         default: return CreateLevel1_4();
     }
 }
@@ -22,7 +23,7 @@ LevelConfig LevelManager::CreateLevel(int levelNum) {
 LevelConfig LevelManager::CreateLevel1_1() {
     LevelConfig cfg;
     cfg.activeLanes = {3};                      // middle lane only
-    cfg.seedBank    = {PlantType::CHOMPER};  // Peashooter only
+    cfg.seedBank    = {PlantType::PEASHOOTER};  // Peashooter only
     cfg.startingSun = 1000;                      // enough for 1 Peashooter + bonus
 
     using Z = ZombieType;
@@ -30,11 +31,14 @@ LevelConfig LevelManager::CreateLevel1_1() {
     // One wave: 5 Basics in lane 3, spaced 8 s apart so each arrives solo
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 3,  0.0f},
-        {Z::NORMAL, 3,  8.0f},
-        {Z::NORMAL, 3, 16.0f},
+        {Z::CONEHEAD, 3,  8.0f},
+        {Z::BUCKETHEAD, 3, 16.0f},
         {Z::NORMAL, 3, 24.0f},
         {Z::NORMAL, 3, 32.0f}
     }, false});
+
+    cfg.rewardPlant  = PlantType::SUNFLOWER;
+    cfg.nextLevelNum = 2;
 
     return cfg;
 }
@@ -78,6 +82,9 @@ LevelConfig LevelManager::CreateLevel1_2() {
         {Z::NORMAL,   0,  9.0f}
     }, true});
 
+    cfg.rewardPlant  = PlantType::CHERRYBOMB;
+    cfg.nextLevelNum = 3;
+
     return cfg;
 }
 
@@ -90,11 +97,11 @@ LevelConfig LevelManager::CreateLevel1_2() {
 LevelConfig LevelManager::CreateLevel1_3() {
     LevelConfig cfg;
     cfg.activeLanes = {2, 3, 4};
-    // cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::PEASHOOTER,
-    //                    PlantType::CHERRYBOMB};
-    cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::SNOWPEA, PlantType::REPEATER,
-                       PlantType::POTATOMINE};
-    cfg.startingSun = 999;
+    cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::PEASHOOTER,
+                       PlantType::CHERRYBOMB};
+    // cfg.seedBank    = {PlantType::SUNFLOWER, PlantType::SNOWPEA, PlantType::REPEATER,
+    //                    PlantType::POTATOMINE};
+    cfg.startingSun = 50;
 
     using Z = ZombieType;
 
@@ -138,6 +145,9 @@ LevelConfig LevelManager::CreateLevel1_3() {
         {Z::NORMAL,   0, 6.0f},
         {Z::NORMAL,   0, 7.5f}
     }, true});
+
+    cfg.rewardPlant  = PlantType::WALLNUT;
+    cfg.nextLevelNum = 4;
 
     return cfg;
 }
@@ -654,6 +664,224 @@ LevelConfig LevelManager::CreateLevel1_8() {
         {Z::BUCKETHEAD, 0,  1.0f},
         {Z::BUCKETHEAD, 0,  4.0f},
         {Z::NORMAL,     0, 16.0f}   // ambush: straggler after main cluster
+    }, true});
+
+    return cfg;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Level 1-9  ─  "All Hands on Deck"
+// ══════════════════════════════════════════════════════════════════════════════
+// All 5 lanes.  20 waves (Big Waves at 10 & 20).
+// Plants: Sunflower, Peashooter, Snow Pea, Wall-nut, Potato Mine, Repeater
+// Zombies: Normal, Conehead, Pole Vaulter, Buckethead (all four types)
+//
+// Point-modifier schedule:
+//   Waves  1– 3 : no modifier   → solo Regular intro
+//   Waves  4– 6 : +2 pts, None Guaranteed → Conehead debut via dynamic pool
+//   Waves  7– 9 : +2 pts, 1 Guaranteed   → Pole Vaulter first appears (Wave 9)
+//   Wave  10    : BIG WAVE, +4 pts        → Buckethead shock debut inside huge wave
+//   Waves 11–12 : +4 pts, None Guaranteed → Buckethead enters regular rotation
+//   Waves 13–15 : +4 pts, 1 Guaranteed   → all four types; each type gets a guaranteed slot
+//   Waves 16–18 : +6 pts, None Guaranteed → dual Bucketheads, dual Pole Vaulters
+//   Wave  19    : +6 pts, 1 Guaranteed   → near-finale intensity; dual Bucketheads
+//   Wave  20    : FINAL BIG WAVE         → all four types, 12-zombie chaos
+// ══════════════════════════════════════════════════════════════════════════════
+LevelConfig LevelManager::CreateLevel1_9() {
+    LevelConfig cfg;
+    cfg.activeLanes = {1, 2, 3, 4, 5};
+    cfg.seedBank    = {PlantType::SUNFLOWER,
+                       PlantType::PEASHOOTER,
+                       PlantType::SNOWPEA,
+                       PlantType::WALLNUT,
+                       PlantType::POTATOMINE,
+                       PlantType::REPEATER};
+    cfg.startingSun = 50;
+
+    using Z = ZombieType;
+
+    // ── Waves 1-3 : No modifier ─ solo Regular intro ──────────────────────
+    // Wave 1: 1 Normal, centre lane — ultra-soft opener
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 3, 0.0f}
+    }, false});
+
+    // Wave 2: 1 Normal, random lane
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+
+    // Wave 3: 1 Normal, random lane — last no-modifier wave
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+
+    // ── Waves 4-6 : +2 pts, None Guaranteed ─ Conehead debut ──────────────
+    // Wave 4: 2 Normals, random lanes staggered — first multi-zombie pressure
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f},
+        {Z::NORMAL, 0, 5.0f}
+    }, false});
+
+    // Wave 5: 1 Normal + 1 Conehead — FIRST CONEHEAD APPEARANCE
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,   0, 0.0f},
+        {Z::CONEHEAD, 0, 4.0f}
+    }, false});
+
+    // Wave 6: 2 Coneheads — armor is now the standard threat
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD, 0, 0.0f},
+        {Z::CONEHEAD, 0, 5.0f}
+    }, false});
+
+    // ── Waves 7-9 : +2 pts, 1 Guaranteed ─ Conehead baseline; PV teaser ───
+    // Wave 7: 1 Conehead (guaranteed) + 2 Normals — FIRST GUARANTEED CONEHEAD
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD, 0, 0.0f},   // guaranteed
+        {Z::NORMAL,   0, 2.0f},
+        {Z::NORMAL,   0, 6.0f}
+    }, false});
+
+    // Wave 8: 1 Normal (guaranteed) + 1 Conehead + 1 Normal
+    //         Conehead trails the opener by ~4 s — "second punch" timing
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,   0, 0.0f},   // guaranteed
+        {Z::NORMAL,   0, 3.0f},
+        {Z::CONEHEAD, 0, 7.0f}
+    }, false});
+
+    // Wave 9: 1 Normal (guaranteed) + 1 Conehead + 1 Pole Vaulter
+    //         FIRST POLE VAULTING ZOMBIE — arrives ~5 s after the pair
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,    0, 0.0f},   // guaranteed
+        {Z::CONEHEAD,  0, 3.0f},
+        {Z::POLEVAULT, 0, 8.0f}   // first PoleVault appearance
+    }, false});
+
+    // ── Wave 10 : BIG WAVE, +4 pts ─ Buckethead shock debut ───────────────
+    // 3 Normals (outer lanes) + 3 Coneheads (random) + 2 Pole Vaulters (flanks)
+    // + 1 Buckethead (random, delayed 4 s) — FIRST BUCKETHEAD
+    // "A huge wave of zombies is approaching!"
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     1,  0.0f},
+        {Z::NORMAL,     3,  1.0f},
+        {Z::NORMAL,     5,  2.0f},
+        {Z::CONEHEAD,   0,  0.0f},
+        {Z::CONEHEAD,   0,  2.0f},
+        {Z::CONEHEAD,   0,  4.0f},
+        {Z::POLEVAULT,  2,  0.0f},
+        {Z::POLEVAULT,  4,  1.5f},
+        {Z::BUCKETHEAD, 0,  4.0f}   // first Buckethead — arrives mid-chaos
+    }, true});
+
+    // ── Waves 11-12 : +4 pts, None Guaranteed ─ Buckethead integration ─────
+    // Wave 11: 1 Normal + 2 Coneheads + 1 Buckethead — Buckethead encore, solo
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::CONEHEAD,   0, 2.0f},
+        {Z::CONEHEAD,   0, 6.0f},
+        {Z::BUCKETHEAD, 0, 4.0f}
+    }, false});
+
+    // Wave 12: 2 Coneheads + 1 Pole Vaulter + 1 Buckethead
+    //          Both heavyweights share the wave for the first time
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD,   0, 0.0f},
+        {Z::CONEHEAD,   0, 4.0f},
+        {Z::POLEVAULT,  0, 2.0f},
+        {Z::BUCKETHEAD, 0, 1.0f}
+    }, false});
+
+    // ── Waves 13-15 : +4 pts, 1 Guaranteed ─ all four types; escalating slots
+    // Wave 13: 1 Conehead (guaranteed) + 1 Conehead + 1 Pole Vaulter + 1 Buckethead
+    //          ALL FOUR ZOMBIE TYPES ACTIVE SIMULTANEOUSLY FOR THE FIRST TIME
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD,   0, 0.0f},   // guaranteed
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::POLEVAULT,  0, 2.0f},
+        {Z::BUCKETHEAD, 0, 3.0f}
+    }, false});
+
+    // Wave 14: 1 Pole Vaulter (guaranteed) + 2 Coneheads + 1 Buckethead
+    //          FIRST GUARANTEED POLE VAULTER — agility is now a constant baseline
+    cfg.zombieWaves.waves.push_back({{
+        {Z::POLEVAULT,  0, 0.0f},   // guaranteed
+        {Z::CONEHEAD,   0, 1.5f},
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::BUCKETHEAD, 0, 3.0f}
+    }, false});
+
+    // Wave 15: 1 Buckethead (guaranteed) + 2 Coneheads + 1 Pole Vaulter
+    //          FIRST GUARANTEED BUCKETHEAD — heavy armor is now permanent baseline
+    cfg.zombieWaves.waves.push_back({{
+        {Z::BUCKETHEAD, 0, 0.0f},   // guaranteed
+        {Z::CONEHEAD,   0, 1.0f},
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::POLEVAULT,  0, 3.0f}
+    }, false});
+
+    // ── Waves 16-18 : +6 pts, None Guaranteed ─ dual Bucketheads, dual PVs ─
+    // Wave 16: 2 Coneheads + 2 Pole Vaulters + 1 Buckethead
+    //          Dual Pole Vaulters create simultaneous split-vault across flanks
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD,   0, 0.0f},
+        {Z::CONEHEAD,   0, 4.0f},
+        {Z::POLEVAULT,  2, 0.0f},
+        {Z::POLEVAULT,  4, 2.0f},
+        {Z::BUCKETHEAD, 0, 1.5f}
+    }, false});
+
+    // Wave 17: 1 Normal + 2 Coneheads + 1 Pole Vaulter + 2 Bucketheads
+    //          FIRST DUAL BUCKETHEAD WAVE — double armor drain
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::CONEHEAD,   0, 1.0f},
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::POLEVAULT,  0, 3.0f},
+        {Z::BUCKETHEAD, 0, 0.0f},
+        {Z::BUCKETHEAD, 0, 4.0f}
+    }, false});
+
+    // Wave 18: 3 Coneheads + 2 Pole Vaulters + 1 Buckethead
+    //          Speed + armor density at maximum for a None Guaranteed wave
+    cfg.zombieWaves.waves.push_back({{
+        {Z::CONEHEAD,   0, 0.0f},
+        {Z::CONEHEAD,   0, 3.0f},
+        {Z::CONEHEAD,   0, 6.0f},
+        {Z::POLEVAULT,  0, 1.0f},
+        {Z::POLEVAULT,  0, 4.5f},
+        {Z::BUCKETHEAD, 0, 2.0f}
+    }, false});
+
+    // ── Wave 19 : +6 pts, 1 Guaranteed ─ near-finale; dual Bucketheads ─────
+    // 1 Buckethead (guaranteed) + 2 Coneheads + 2 Pole Vaulters + 1 Buckethead
+    cfg.zombieWaves.waves.push_back({{
+        {Z::BUCKETHEAD, 0, 0.0f},   // guaranteed
+        {Z::CONEHEAD,   0, 1.5f},
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::POLEVAULT,  0, 2.0f},
+        {Z::POLEVAULT,  0, 6.0f},
+        {Z::BUCKETHEAD, 0, 3.5f}
+    }, false});
+
+    // ── Wave 20 : FINAL BIG WAVE ─ all four types, total chaos ────────────
+    // 2 Normals (outer lanes) + 4 Coneheads (random) +
+    // 3 Pole Vaulters (lanes 2, 3, 4) + 3 Bucketheads (random)
+    // "A huge wave of zombies is approaching!"
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     1,  0.0f},
+        {Z::NORMAL,     5,  1.5f},
+        {Z::CONEHEAD,   0,  0.0f},
+        {Z::CONEHEAD,   0,  2.0f},
+        {Z::CONEHEAD,   0,  4.0f},
+        {Z::CONEHEAD,   0,  6.0f},
+        {Z::POLEVAULT,  2,  0.0f},
+        {Z::POLEVAULT,  3,  1.0f},
+        {Z::POLEVAULT,  4,  2.5f},
+        {Z::BUCKETHEAD, 0,  0.0f},
+        {Z::BUCKETHEAD, 0,  2.0f},
+        {Z::BUCKETHEAD, 0,  5.0f}
     }, true});
 
     return cfg;

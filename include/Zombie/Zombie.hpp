@@ -3,6 +3,7 @@
 
 #include "Util/GameObject.hpp"
 #include "Util/Animation.hpp"
+#include "Zombie/Armor.hpp"
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
@@ -25,7 +26,7 @@ class Plant;
  * The state machine logic is ENCAPSULATED within the Zombie class.
  * Zombie::Update() handles all state transitions and behavior internally.
  *
- * Concrete zombies (NormalZombie, ConeheadZombie) inherit from this base.
+ * Concrete zombies (NormalZombie, PoleVaultZombie) inherit from this base.
  */
 
 class Zombie : public Util::GameObject {
@@ -108,12 +109,15 @@ public:
 
     /**
      * @brief Apply damage to the zombie.
+     * Damage is routed through equipped armor first; any overflow is applied
+     * to the zombie's base health.
      * @param amount Damage to apply
      */
     void TakeDamage(int amount);
 
     /**
      * @brief Apply explosion damage (Cherry Bomb) - uses charred death animation.
+     * Same armor-first routing as TakeDamage.
      * @param amount Damage to apply
      */
     void TakeExplosionDamage(int amount);
@@ -121,6 +125,21 @@ public:
     // State management
     State GetState() const { return m_State; }
     void SetState(State newState);
+
+    // ── Armor composition ──────────────────────────────────────────────────
+
+    /**
+     * @brief Equip an armor component.
+     * Creates an overlay child GameObject for the armor sprite and adds it to
+     * this zombie's m_Children list so the renderer picks it up automatically.
+     * Must be called BEFORE Initialize() so the overlay is ready when the
+     * zombie first renders.
+     * @param armor Ownership transferred; pass nullptr to remove existing armor.
+     */
+    void EquipArmor(std::unique_ptr<Armor> armor);
+
+    bool        HasArmor()   const { return m_Armor != nullptr; }
+    const Armor* GetArmor()  const { return m_Armor.get(); }
 
     // Accessors
     const std::string& GetName() const { return m_Name; }
@@ -163,6 +182,20 @@ protected:
     virtual void OnStateChanged(State newState);
 
     /**
+     * @brief Called whenever the armor's DegradationState changes.
+     * Override to update the overlay image or switch animations.
+     * Default implementation updates the overlay sprite via m_ArmorOverlay.
+     * @param newState The new degradation level
+     */
+    virtual void OnArmorStateChanged(Armor::DegradationState newState);
+
+    /**
+     * @brief Called when the armor is fully depleted and removed.
+     * Default implementation hides the overlay and switches to basic animations.
+     */
+    virtual void OnArmorDestroyed();
+
+    /**
      * @brief Set up an animation from frame paths.
      */
     void SetupAnimation(const std::vector<std::string>& frames,
@@ -203,6 +236,17 @@ protected:
     std::shared_ptr<Util::Animation> m_AttackingAnimation;
     std::shared_ptr<Util::Animation> m_DyingAnimation;
     std::shared_ptr<Util::Animation> m_CharredAnimation;
+
+    // ── Armor composition ──────────────────────────────────────────────────
+    /// Owned armor component (nullptr when unarmed).
+    std::unique_ptr<Armor> m_Armor;
+
+    /// Lightweight child GameObject rendering the static armor overlay sprite.
+    /// Tracked separately so we can show/hide/reposition it each frame.
+    std::shared_ptr<Util::GameObject> m_ArmorOverlay;
+
+    /// Cache last known armor state to detect changes in TakeDamage().
+    Armor::DegradationState m_LastArmorState = Armor::DegradationState::INTACT;
 };
 
 #endif // ZOMBIE_HPP
