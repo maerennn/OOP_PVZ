@@ -2,6 +2,8 @@
 #include "Util/Image.hpp"
 #include "GameConfig.hpp"
 
+#define SHOVEL_CURSOR RESOURCE_DIR "/gameGUI/Shovel.png"
+
 CursorItem::CursorItem() {
     SetZIndex(GameConfig::ZIndex::CURSOR_ITEM);
     SetVisible(false);
@@ -19,6 +21,19 @@ void CursorItem::SetPlantType(PlantType type) {
 
     // Scale and set semi-transparent appearance
     m_Transform.scale = {0.1f, 0.1f};
+
+    SetVisible(true);
+}
+
+void CursorItem::SetShovel() {
+    m_Active = true;
+
+    // Create shovel image
+    auto shovelImage = std::make_shared<Util::Image>(SHOVEL_CURSOR);
+    SetDrawable(shovelImage);
+
+    // Scale appropriately
+    m_Transform.scale = {0.8f, 0.8f};
 
     SetVisible(true);
 }

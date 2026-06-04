@@ -46,6 +46,8 @@ set(SRC_FILES
     # GUI System
     GUI/SeedPacket.cpp
     GUI/SeedBank.cpp
+    GUI/ShovelBank.cpp
+    GUI/ConveyorBelt.cpp
     GUI/CursorItem.cpp
     GUI/GhostPlant.cpp
     GUI/ProgressBar.cpp
@@ -103,6 +105,7 @@ set(INCLUDE_FILES
     # GUI System
     GUI/SeedPacket.hpp
     GUI/SeedBank.hpp
+    GUI/ShovelBank.hpp
     GUI/CursorItem.hpp
     GUI/GhostPlant.hpp
     GUI/ProgressBar.hpp

@@ -3,6 +3,8 @@
 #include "GUI/SeedPacket.hpp"
 #include "GUI/CursorItem.hpp"
 #include "GUI/GhostPlant.hpp"
+#include "GUI/ConveyorBelt.hpp"
+#include "GUI/ShovelBank.hpp"
 #include "SunManager.hpp"
 #include "GameConfig.hpp"
 #include "Util/Input.hpp"
@@ -27,6 +29,9 @@ void PlantingSystem::HandleInput() {
             break;
         case State::SEED_SELECTED:
             HandleSeedSelectedInput();
+            break;
+        case State::SHOVEL_SELECTED:
+            HandleShovelSelectedInput();
             break;
     }
 
@@ -60,6 +65,10 @@ void PlantingSystem::Update(float /*deltaTime*/) {
             // Cursor not over grid, hide ghost
             m_GhostPlant.Clear();
         }
+    } else if (m_CurrentState == State::SHOVEL_SELECTED) {
+        glm::vec2 cursorPos = GetCursorPosition();
+        // Update cursor item position for shovel cursor
+        m_CursorItem.UpdatePosition(cursorPos);
     }
 }
 
@@ -68,6 +77,29 @@ void PlantingSystem::HandleIdleInput() {
     if (IsLeftMouseClicked()) {
         glm::vec2 cursorPos = GetCursorPosition();
 
+        // ── Shovel Bank check ──────────────────────────────────────────────
+        if (m_ShovelBank && m_ShovelBank->IsClicked(cursorPos)) {
+            m_ShovelBank->SetPickedUp(true);
+            TransitionTo(State::SHOVEL_SELECTED);
+            LOG_DEBUG("Shovel selected");
+            return;
+        }
+
+        // ── Conveyor Belt mode ─────────────────────────────────────────────
+        if (m_ConveyorBelt) {
+            SeedPacket* card = m_ConveyorBelt->GetCardAtPosition(cursorPos);
+            if (card) {
+                m_SelectedConveyorIndex = m_ConveyorBelt->GetCardIndex(card);
+                m_SelectedPlant = card->GetPlantType();
+                TransitionTo(State::SEED_SELECTED);
+                LOG_DEBUG("Conveyor: selected {} (index {})",
+                          PlantRegistry::Get(m_SelectedPlant).name,
+                          m_SelectedConveyorIndex);
+            }
+            return;
+        }
+
+        // ── Normal Seed Bank mode ──────────────────────────────────────────
         SeedPacket* packet = m_SeedBank.GetPacketAtPosition(cursorPos);
         if (packet && packet->CanSelect(m_SunManager.GetSun())) {
             m_SelectedPlant = packet->GetPlantType();
@@ -95,7 +127,20 @@ void PlantingSystem::HandleSeedSelectedInput() {
             bool occupied = m_IsOccupied ? m_IsOccupied(row, col) : false;
 
             if (!occupied) {
-                // Place the plant
+                // ── Conveyor Belt mode: free placement, consume card ───────
+                if (m_ConveyorBelt) {
+                    if (m_OnPlant) {
+                        m_OnPlant(m_SelectedPlant, row, col);
+                    }
+                    m_ConveyorBelt->RemoveCard(m_SelectedConveyorIndex);
+                    m_SelectedConveyorIndex = -1;
+                    LOG_DEBUG("Conveyor: placed {} at ({}, {})",
+                              PlantRegistry::Get(m_SelectedPlant).name, row, col);
+                    TransitionTo(State::IDLE);
+                    return;
+                }
+
+                // ── Normal mode: spend sun + start cooldown ────────────────
                 int cost = PlantRegistry::Get(m_SelectedPlant).sunCost;
                 if (m_SunManager.SpendSun(cost)) {
                     // Notify callback to create the plant
@@ -126,6 +171,9 @@ void PlantingSystem::TransitionTo(State newState) {
             m_CursorItem.Clear();
             m_GhostPlant.Clear();
             break;
+        case State::SHOVEL_SELECTED:
+            m_CursorItem.Clear();
+            break;
     }
 
     m_CurrentState = newState;
@@ -136,6 +184,10 @@ void PlantingSystem::TransitionTo(State newState) {
             break;
         case State::SEED_SELECTED:
             m_CursorItem.SetPlantType(m_SelectedPlant);
+            break;
+        case State::SHOVEL_SELECTED:
+            // Show shovel cursor
+            m_CursorItem.SetShovel();
             break;
     }
 }
@@ -153,4 +205,41 @@ bool PlantingSystem::IsLeftMouseClicked() const {
 bool PlantingSystem::IsRightMouseClicked() const {
     bool pressed = Util::Input::IsKeyPressed(Util::Keycode::MOUSE_RB);
     return pressed && !m_WasRightPressed;
+}
+
+void PlantingSystem::HandleShovelSelectedInput() {
+    glm::vec2 cursorPos = GetCursorPosition();
+
+    // Right click cancels shovel selection
+    if (IsRightMouseClicked()) {
+        if (m_ShovelBank) {
+            m_ShovelBank->SetPickedUp(false);
+        }
+        TransitionTo(State::IDLE);
+        LOG_DEBUG("Shovel selection cancelled");
+        return;
+    }
+
+    // Left click attempts to remove plant
+    if (IsLeftMouseClicked()) {
+        int row, col;
+        if (GameConfig::PositionToCell(cursorPos, row, col)) {
+            // Check if cell is occupied
+            bool occupied = m_IsOccupied ? m_IsOccupied(row, col) : false;
+
+            if (occupied) {
+                // Remove the plant
+                if (m_OnRemovePlant) {
+                    m_OnRemovePlant(row, col);
+                }
+                LOG_DEBUG("Removed plant at ({}, {})", row, col);
+            }
+            
+            // Return shovel to bank and go back to idle
+            if (m_ShovelBank) {
+                m_ShovelBank->SetPickedUp(false);
+            }
+            TransitionTo(State::IDLE);
+        }
+    }
 }

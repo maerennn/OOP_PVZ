@@ -10,6 +10,7 @@ LevelConfig LevelManager::CreateLevel(int levelNum) {
         case 7:  return CreateLevel1_7();
         case 8:  return CreateLevel1_8();
         case 9:  return CreateLevel1_9();
+        case 10: return CreateLevel1_10();
         default: return CreateLevel1_4();
     }
 }
@@ -258,6 +259,8 @@ LevelConfig LevelManager::CreateLevel1_4() {
         {Z::NORMAL,   0, 7.0f}
     }, true});
 
+    cfg.rewardPlant  = PlantType::POTATOMINE;
+    cfg.nextLevelNum = 6;
     return cfg;
 }
 
@@ -346,6 +349,8 @@ LevelConfig LevelManager::CreateLevel1_6() {
         {Z::POLEVAULT, 0,  5.0f}    // first PoleVaultZombie appearance
     }, true});
 
+    cfg.rewardPlant  = PlantType::SNOWPEA;
+    cfg.nextLevelNum = 6;
     return cfg;
 }
 
@@ -562,7 +567,8 @@ LevelConfig LevelManager::CreateLevel1_7() {
         {Z::POLEVAULT, 0,  5.0f},
         {Z::CONEHEAD,  0, 18.0f}   // ambush: final sting after main cluster
     }, true});
-
+    cfg.rewardPlant  = PlantType::CHOMPER;
+    cfg.nextLevelNum = 8;
     return cfg;
 }
 
@@ -666,6 +672,8 @@ LevelConfig LevelManager::CreateLevel1_8() {
         {Z::NORMAL,     0, 16.0f}   // ambush: straggler after main cluster
     }, true});
 
+    cfg.rewardPlant  = PlantType::REPEATER;
+    cfg.nextLevelNum = 9;
     return cfg;
 }
 
@@ -882,6 +890,264 @@ LevelConfig LevelManager::CreateLevel1_9() {
         {Z::BUCKETHEAD, 0,  0.0f},
         {Z::BUCKETHEAD, 0,  2.0f},
         {Z::BUCKETHEAD, 0,  5.0f}
+    }, true});
+    
+    cfg.nextLevelNum = 10;
+    return cfg;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Level 1-10  ─  Conveyor Belt
+// ══════════════════════════════════════════════════════════════════════════════
+// All 5 lanes.  No sun mechanic — plants are delivered by a moving belt.
+// 20 waves (flag waves at W10 and W20).
+// Zombies: Normal → Conehead → PoleVault → Buckethead (introduced progressively)
+// ══════════════════════════════════════════════════════════════════════════════
+LevelConfig LevelManager::CreateLevel1_10() {
+    LevelConfig cfg;
+    cfg.activeLanes    = {1, 2, 3, 4, 5};
+    cfg.startingSun    = 0;          // sun unused — conveyor belt provides plants
+    cfg.useConveyorBelt  = true;
+    cfg.conveyorInterval = 7.5f;
+    cfg.conveyorPool   = {
+        PlantType::PEASHOOTER,
+        PlantType::WALLNUT,
+        PlantType::CHERRYBOMB,
+        PlantType::REPEATER,
+        PlantType::SNOWPEA,
+        PlantType::POTATOMINE,
+        PlantType::CHOMPER,
+    };
+    cfg.rewardPlant  = std::nullopt;
+    cfg.nextLevelNum = 0;
+
+    using Z = ZombieType;
+
+    // ── W1–3 : Single Normal ──────────────────────────────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 0, 0.0f}
+    }, false});
+
+    // ── W4 : 1 Normal + 1 Conehead (Conehead debut) ───────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,   0, 0.0f},
+        {Z::CONEHEAD, 0, 5.0f}
+    }, false});
+
+    // ── W5 : 2 Normals + 1 Conehead ──────────────────────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,   0, 0.0f},
+        {Z::NORMAL,   0, 4.0f},
+        {Z::CONEHEAD, 0, 2.0f}
+    }, false});
+
+    // ── W6 : 2 Normals + 2 Coneheads ─────────────────────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,   0, 0.0f},
+        {Z::NORMAL,   0, 5.0f},
+        {Z::CONEHEAD, 0, 2.0f},
+        {Z::CONEHEAD, 0, 7.0f}
+    }, false});
+
+    // ── W7 : 2 Normals + 1 Conehead + 1 PoleVault (PoleVault debut) ──────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,    0, 0.0f},
+        {Z::NORMAL,    0, 5.0f},
+        {Z::CONEHEAD,  0, 3.0f},
+        {Z::POLEVAULT, 0, 0.0f}
+    }, false});
+
+    // ── W8 : 3 Normals + 1 Conehead + 1 PoleVault ────────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,    0, 0.0f},
+        {Z::NORMAL,    0, 3.0f},
+        {Z::NORMAL,    0, 6.0f},
+        {Z::CONEHEAD,  0, 2.0f},
+        {Z::POLEVAULT, 0, 4.0f}
+    }, false});
+
+    // ── W9 : 3 Normals + 2 Coneheads + 1 PoleVault ───────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,    0, 0.0f},
+        {Z::NORMAL,    0, 3.0f},
+        {Z::NORMAL,    0, 6.0f},
+        {Z::CONEHEAD,  0, 1.5f},
+        {Z::CONEHEAD,  0, 5.0f},
+        {Z::POLEVAULT, 0, 3.0f}
+    }, false});
+
+    // ── W10 (FLAG) : 5 Normals (one per lane) + 1 Conehead + 1 PoleVault ─
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,    1, 0.0f},
+        {Z::NORMAL,    2, 2.0f},
+        {Z::NORMAL,    3, 4.0f},
+        {Z::NORMAL,    4, 6.0f},
+        {Z::NORMAL,    5, 8.0f},
+        {Z::CONEHEAD,  0, 0.0f},
+        {Z::POLEVAULT, 0, 3.0f}
+    }, true});
+
+    // ── W11 : 3 Normals + 1 Conehead + 1 Buckethead (Buckethead debut) ───
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::NORMAL,     0, 3.0f},
+        {Z::NORMAL,     0, 6.0f},
+        {Z::CONEHEAD,   0, 2.0f},
+        {Z::BUCKETHEAD, 0, 0.0f}
+    }, false});
+
+    // ── W12 : 4 Normals + 2 Coneheads + 1 Buckethead ─────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::NORMAL,     0, 2.5f},
+        {Z::NORMAL,     0, 5.0f},
+        {Z::NORMAL,     0, 7.5f},
+        {Z::CONEHEAD,   0, 1.0f},
+        {Z::CONEHEAD,   0, 5.5f},
+        {Z::BUCKETHEAD, 0, 3.0f}
+    }, false});
+
+    // ── W13 : 4 Normals + 2 Coneheads + 2 Bucketheads ────────────────────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::NORMAL,     0, 3.0f},
+        {Z::NORMAL,     0, 6.0f},
+        {Z::NORMAL,     0, 9.0f},
+        {Z::CONEHEAD,   0, 1.5f},
+        {Z::CONEHEAD,   0, 7.5f},
+        {Z::BUCKETHEAD, 0, 0.0f},
+        {Z::BUCKETHEAD, 0, 5.0f}
+    }, false});
+
+    // ── W14 : 5 Normals + 2 Coneheads + 1 PoleVault + 1 Buckethead ──────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::NORMAL,     0, 2.0f},
+        {Z::NORMAL,     0, 4.0f},
+        {Z::NORMAL,     0, 6.0f},
+        {Z::NORMAL,     0, 8.0f},
+        {Z::CONEHEAD,   0, 1.0f},
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::POLEVAULT,  0, 3.0f},
+        {Z::BUCKETHEAD, 0, 2.0f}
+    }, false});
+
+    // ── W15 : 5 Normals + 3 Coneheads + 2 PoleVaults + 2 Bucketheads ────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0,  0.0f},
+        {Z::NORMAL,     0,  2.5f},
+        {Z::NORMAL,     0,  5.0f},
+        {Z::NORMAL,     0,  7.5f},
+        {Z::NORMAL,     0, 10.0f},
+        {Z::CONEHEAD,   0,  1.0f},
+        {Z::CONEHEAD,   0,  4.0f},
+        {Z::CONEHEAD,   0,  8.0f},
+        {Z::POLEVAULT,  0,  0.0f},
+        {Z::POLEVAULT,  0,  5.0f},
+        {Z::BUCKETHEAD, 0,  2.0f},
+        {Z::BUCKETHEAD, 0,  7.0f}
+    }, false});
+
+    // ── W16 : 5 Normals + 3 Coneheads + 2 PoleVaults + 2 Bucketheads ────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0, 0.0f},
+        {Z::NORMAL,     0, 2.0f},
+        {Z::NORMAL,     0, 4.0f},
+        {Z::NORMAL,     0, 7.0f},
+        {Z::NORMAL,     0, 9.0f},
+        {Z::CONEHEAD,   0, 1.0f},
+        {Z::CONEHEAD,   0, 5.0f},
+        {Z::CONEHEAD,   0, 8.0f},
+        {Z::POLEVAULT,  0, 2.0f},
+        {Z::POLEVAULT,  0, 6.0f},
+        {Z::BUCKETHEAD, 0, 0.0f},
+        {Z::BUCKETHEAD, 0, 5.5f}
+    }, false});
+
+    // ── W17 : 6 Normals + 3 Coneheads + 3 PoleVaults + 2 Bucketheads ────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0,  0.0f},
+        {Z::NORMAL,     0,  2.0f},
+        {Z::NORMAL,     0,  4.0f},
+        {Z::NORMAL,     0,  6.0f},
+        {Z::NORMAL,     0,  8.5f},
+        {Z::NORMAL,     0, 11.0f},
+        {Z::CONEHEAD,   0,  1.0f},
+        {Z::CONEHEAD,   0,  5.0f},
+        {Z::CONEHEAD,   0,  9.0f},
+        {Z::POLEVAULT,  0,  0.0f},
+        {Z::POLEVAULT,  0,  3.5f},
+        {Z::POLEVAULT,  0,  7.0f},
+        {Z::BUCKETHEAD, 0,  2.0f},
+        {Z::BUCKETHEAD, 0,  7.5f}
+    }, false});
+
+    // ── W18 : 6 Normals + 4 Coneheads + 3 PoleVaults + 3 Bucketheads ────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0,  0.0f},
+        {Z::NORMAL,     0,  2.0f},
+        {Z::NORMAL,     0,  4.5f},
+        {Z::NORMAL,     0,  7.0f},
+        {Z::NORMAL,     0,  9.0f},
+        {Z::NORMAL,     0, 11.5f},
+        {Z::CONEHEAD,   0,  1.0f},
+        {Z::CONEHEAD,   0,  3.5f},
+        {Z::CONEHEAD,   0,  6.0f},
+        {Z::CONEHEAD,   0,  9.5f},
+        {Z::POLEVAULT,  0,  0.0f},
+        {Z::POLEVAULT,  0,  4.0f},
+        {Z::POLEVAULT,  0,  8.0f},
+        {Z::BUCKETHEAD, 0,  1.5f},
+        {Z::BUCKETHEAD, 0,  5.5f},
+        {Z::BUCKETHEAD, 0, 10.0f}
+    }, false});
+
+    // ── W19 : 7 Normals + 4 Coneheads + 3 PoleVaults + 3 Bucketheads ────
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     0,  0.0f},
+        {Z::NORMAL,     0,  2.0f},
+        {Z::NORMAL,     0,  3.5f},
+        {Z::NORMAL,     0,  5.5f},
+        {Z::NORMAL,     0,  7.0f},
+        {Z::NORMAL,     0,  9.0f},
+        {Z::NORMAL,     0, 11.0f},
+        {Z::CONEHEAD,   0,  1.0f},
+        {Z::CONEHEAD,   0,  3.0f},
+        {Z::CONEHEAD,   0,  6.5f},
+        {Z::CONEHEAD,   0, 10.0f},
+        {Z::POLEVAULT,  0,  0.0f},
+        {Z::POLEVAULT,  0,  4.0f},
+        {Z::POLEVAULT,  0,  8.5f},
+        {Z::BUCKETHEAD, 0,  1.5f},
+        {Z::BUCKETHEAD, 0,  6.0f},
+        {Z::BUCKETHEAD, 0, 10.5f}
+    }, false});
+
+    // ── W20 (FLAG / FINAL) : 8 Normals + 4 Coneheads + 3 PoleVaults + 2 Bucketheads ─
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL,     1,  0.0f},
+        {Z::NORMAL,     2,  1.0f},
+        {Z::NORMAL,     3,  2.0f},
+        {Z::NORMAL,     4,  3.0f},
+        {Z::NORMAL,     5,  4.0f},
+        {Z::NORMAL,     0,  1.5f},
+        {Z::NORMAL,     0,  3.5f},
+        {Z::NORMAL,     0,  6.0f},
+        {Z::CONEHEAD,   0,  0.0f},
+        {Z::CONEHEAD,   0,  2.5f},
+        {Z::CONEHEAD,   0,  5.0f},
+        {Z::CONEHEAD,   0,  7.5f},
+        {Z::POLEVAULT,  2,  0.0f},
+        {Z::POLEVAULT,  3,  2.0f},
+        {Z::POLEVAULT,  4,  4.0f},
+        {Z::BUCKETHEAD, 0,  1.0f},
+        {Z::BUCKETHEAD, 0,  5.5f}
     }, true});
 
     return cfg;

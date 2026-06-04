@@ -13,12 +13,14 @@
 #include "GUI/SeedBank.hpp"
 #include "GUI/CursorItem.hpp"
 #include "GUI/GhostPlant.hpp"
+#include "GUI/ShovelBank.hpp"
 #include "Sun.hpp"
 #include "Projectile.hpp"
 #include "Zombie/Zombie.hpp"
 #include "Lawnmower.hpp"
 #include "WaveManager.hpp"
 #include "GUI/ProgressBar.hpp"
+#include "GUI/ConveyorBelt.hpp"
 #include "LevelManager.hpp"
 #include "SeedPacketDrop.hpp"
 #include <memory>
@@ -108,6 +110,7 @@ private:
     // GUI Systems
     std::unique_ptr<SunManager> m_SunManager;
     std::unique_ptr<SeedBank> m_SeedBank;
+    std::unique_ptr<ShovelBank> m_ShovelBank;  // Available on levels 1-6 to 1-10
     std::shared_ptr<CursorItem> m_CursorItem;
     std::shared_ptr<GhostPlant> m_GhostPlant;
     std::unique_ptr<PlantingSystem> m_PlantingSystem;
@@ -126,6 +129,9 @@ private:
     // Wave system
     std::unique_ptr<WaveManager> m_WaveManager;
     std::unique_ptr<ProgressBar> m_ProgressBar;
+
+    // Conveyor Belt (active only for conveyor-belt levels; null otherwise)
+    std::unique_ptr<ConveyorBelt> m_ConveyorBelt;
 
     // Lawnmower system
     std::vector<std::shared_ptr<Lawnmower>> m_Lawnmowers;

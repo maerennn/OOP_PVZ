@@ -11,6 +11,8 @@ class SunManager;
 class CursorItem;
 class GhostPlant;
 class Plant;
+class ConveyorBelt;
+class ShovelBank;
 
 /**
  * @brief State machine managing the plant selection and placement workflow.
@@ -25,6 +27,7 @@ public:
     enum class State {
         IDLE,           // No seed selected
         SEED_SELECTED,  // Seed clicked, following cursor
+        SHOVEL_SELECTED,// Shovel clicked, ready to remove plants
     };
 
     /**
@@ -58,6 +61,24 @@ public:
     void SetOccupiedCallback(OccupiedCallback callback) { m_IsOccupied = std::move(callback); }
 
     /**
+     * @brief Attach a conveyor belt. When set, cards are taken from the belt
+     *        instead of the seed bank, and placement is free (no sun cost).
+     */
+    void SetConveyorBelt(ConveyorBelt* belt) { m_ConveyorBelt = belt; }
+
+    /**
+     * @brief Attach a shovel bank. When set, players can remove plants from the grid.
+     */
+    void SetShovelBank(ShovelBank* shovelBank) { m_ShovelBank = shovelBank; }
+
+    /**
+     * @brief Set callback for when plant should be removed.
+     * Parameters: row, column
+     */
+    using RemovePlantCallback = std::function<void(int, int)>;
+    void SetRemovePlantCallback(RemovePlantCallback callback) { m_OnRemovePlant = std::move(callback); }
+
+    /**
      * @brief Process input events.
      * Call this each frame to handle mouse clicks.
      */
@@ -75,6 +96,7 @@ private:
     void TransitionTo(State newState);
     void HandleIdleInput();
     void HandleSeedSelectedInput();
+    void HandleShovelSelectedInput();
 
     glm::vec2 GetCursorPosition() const;
     bool IsLeftMouseClicked() const;
@@ -90,7 +112,15 @@ private:
     GhostPlant& m_GhostPlant;
 
     PlantCallback m_OnPlant;
+    RemovePlantCallback m_OnRemovePlant;
     OccupiedCallback m_IsOccupied;
+
+    // Conveyor Belt (optional — null when using normal SeedBank)
+    ConveyorBelt* m_ConveyorBelt          = nullptr;
+    int           m_SelectedConveyorIndex = -1;
+
+    // Shovel Bank (optional — null when not available)
+    ShovelBank* m_ShovelBank = nullptr;
 
     // Track mouse state for edge detection
     bool m_WasLeftPressed = false;

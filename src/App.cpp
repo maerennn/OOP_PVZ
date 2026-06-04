@@ -176,6 +176,8 @@ void App::LevelSelect() {
                 20, {0.0f, ROW_START + 6 * ROW_STEP}, cAdv,   1.0f);
         addText("[9]  Level 1-9   5 lanes   All Hands on Deck",
                 20, {0.0f, ROW_START + 7 * ROW_STEP}, cAdv,   1.0f);
+        addText("[0]  Level 1-10  5 lanes   The Ultimate Challenge",
+                20, {0.0f, ROW_START + 8 * ROW_STEP}, cAdv,   1.0f);
 
         // Key hint at the bottom
         addText("Press 1 / 2 / 3 / 4 / 6 / 7 / 8 / 9 to begin   |   ESC to quit",
@@ -209,6 +211,9 @@ void App::LevelSelect() {
         m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_9)) {
         m_SelectedLevel = 9;
+        m_CurrentState  = State::START;
+    } else if (Util::Input::IsKeyUp(Util::Keycode::NUM_0)) {
+        m_SelectedLevel = 10;
         m_CurrentState  = State::START;
     } else if (Util::Input::IsKeyUp(Util::Keycode::ESCAPE) ||
                Util::Input::IfExit()) {
@@ -296,15 +301,42 @@ void App::Start() {
     // ── Initialize Sun Manager ──────────────────────────────────────────
     m_SunManager = std::make_unique<SunManager>();
     m_SunManager->Initialize(config.startingSun);
-    for (auto& obj : m_SunManager->GetUIElements()) {
-        m_Root.AddChild(obj);
+    
+    // Only show sun UI in non-conveyor belt levels
+    if (!config.useConveyorBelt) {
+        for (auto& obj : m_SunManager->GetUIElements()) {
+            m_Root.AddChild(obj);
+        }
     }
 
-    // ── Initialize Seed Bank ────────────────────────────────────────────
+    // ── Initialize Seed Bank / Conveyor Belt ────────────────────────────
     m_SeedBank = std::make_unique<SeedBank>();
-    m_SeedBank->Initialize(config.seedBank);
-    for (auto& obj : m_SeedBank->GetAllObjects()) {
-        m_Root.AddChild(obj);
+    if (config.useConveyorBelt) {
+        // Conveyor Belt mode: belt provides free cards, SeedBank is unused
+        // (SeedBank must still exist as PlantingSystem holds a reference)
+        m_ConveyorBelt = std::make_unique<ConveyorBelt>();
+        m_ConveyorBelt->Initialize(config.conveyorPool, config.conveyorInterval);
+
+        // Wire callbacks for dynamic card addition/removal
+        m_ConveyorBelt->SetAddObjectCallback(
+            [this](std::shared_ptr<Util::GameObject> obj) {
+                m_Root.AddChild(obj);
+            }
+        );
+        m_ConveyorBelt->SetRemoveObjectCallback(
+            [this](std::shared_ptr<Util::GameObject> obj) {
+                m_Root.RemoveChild(obj);
+            }
+        );
+
+        for (auto& obj : m_ConveyorBelt->GetAllObjects()) {
+            m_Root.AddChild(obj);
+        }
+    } else {
+        m_SeedBank->Initialize(config.seedBank);
+        for (auto& obj : m_SeedBank->GetAllObjects()) {
+            m_Root.AddChild(obj);
+        }
     }
 
     // ── Initialize Cursor Item ──────────────────────────────────────────
@@ -314,6 +346,15 @@ void App::Start() {
     // ── Initialize Ghost Plant ──────────────────────────────────────────
     m_GhostPlant = std::make_shared<GhostPlant>();
     m_Root.AddChild(m_GhostPlant);
+
+    // ── Initialize Shovel Bank (levels 1-6 to 1-10 only) ────────────────
+    if (m_SelectedLevel >= 6 && m_SelectedLevel <= 10) {
+        m_ShovelBank = std::make_unique<ShovelBank>();
+        m_ShovelBank->Initialize(m_SelectedLevel);
+        for (auto& obj : m_ShovelBank->GetAllObjects()) {
+            m_Root.AddChild(obj);
+        }
+    }
 
     // ── Initialize Planting System ──────────────────────────────────────
     m_PlantingSystem = std::make_unique<PlantingSystem>(
@@ -337,6 +378,25 @@ void App::Start() {
             return IsCellOccupied(row, col);
         }
     );
+
+    // Wire conveyor belt if this is a belt level
+    if (m_ConveyorBelt) {
+        m_PlantingSystem->SetConveyorBelt(m_ConveyorBelt.get());
+    }
+
+    // Wire shovel bank if available
+    if (m_ShovelBank) {
+        m_PlantingSystem->SetShovelBank(m_ShovelBank.get());
+        m_PlantingSystem->SetRemovePlantCallback(
+            [this](int row, int col) {
+                // Remove plant from grid
+                if (m_PlantGrid[row][col]) {
+                    m_Root.RemoveChild(m_PlantGrid[row][col]);
+                    m_PlantGrid[row][col] = nullptr;
+                }
+            }
+        );
+    }
 
     // ── Initialize Lawnmowers ────────────────────────────────────────────
     SpawnLawnmowers();
@@ -398,7 +458,11 @@ void App::Update() {
     float deltaTime = 1.0f / 60.0f;  // Fixed timestep for now
 
     m_SunManager->Update();
-    m_SeedBank->Update(deltaTime, m_SunManager->GetSun());
+    if (m_ConveyorBelt) {
+        m_ConveyorBelt->Update(deltaTime);
+    } else {
+        m_SeedBank->Update(deltaTime, m_SunManager->GetSun());
+    }
 
     // ── Handle Planting Input and State ─────────────────────────────────
     m_PlantingSystem->HandleInput();
@@ -505,6 +569,14 @@ void App::CleanupGame() {
     if (m_SeedBank) {
         for (auto& o : m_SeedBank->GetAllObjects()) m_Root.RemoveChild(o);
         m_SeedBank.reset();
+    }
+    if (m_ShovelBank) {
+        for (auto& o : m_ShovelBank->GetAllObjects()) m_Root.RemoveChild(o);
+        m_ShovelBank.reset();
+    }
+    if (m_ConveyorBelt) {
+        for (auto& o : m_ConveyorBelt->GetAllObjects()) m_Root.RemoveChild(o);
+        m_ConveyorBelt.reset();
     }
     if (m_CursorItem)  { m_Root.RemoveChild(m_CursorItem);  m_CursorItem.reset(); }
     if (m_GhostPlant)  { m_Root.RemoveChild(m_GhostPlant);  m_GhostPlant.reset(); }
@@ -708,9 +780,12 @@ void App::UpdateSuns(float deltaTime) {
     m_Suns.erase(it, m_Suns.end());
 
     // ── Sky Drop Timer ──────────────────────────────────────────────────
-    m_SkyDropTimer += deltaTime;
+    // Sky-drop suns are disabled in conveyor-belt levels (no sun mechanic)
+    if (!m_ConveyorBelt) {
+        m_SkyDropTimer += deltaTime;
+    }
 
-    if (m_SkyDropTimer >= SKY_DROP_INTERVAL) {
+    if (!m_ConveyorBelt && m_SkyDropTimer >= SKY_DROP_INTERVAL) {
         m_SkyDropTimer = 0.0f;
 
         // Random X position within the lawn grid area

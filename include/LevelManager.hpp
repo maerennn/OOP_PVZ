@@ -33,6 +33,16 @@ struct LevelConfig {
 
     /** Level number to load after collecting the reward (0 = show win screen). */
     int nextLevelNum = 0;
+
+    // ── Conveyor Belt mode (replaces Seed Bank + Sun mechanics) ──────────
+    /** When true, a conveyor belt replaces the seed bank; sun is unused. */
+    bool useConveyorBelt = false;
+
+    /** Seconds between automatic card pushes when belt is not full. */
+    float conveyorInterval = 7.5f;
+
+    /** Plant types drawn from randomly to fill the belt. */
+    std::vector<PlantType> conveyorPool;
 };
 
 /**
@@ -62,6 +72,7 @@ public:
     static LevelConfig CreateLevel1_7();  ///< The Vaulter's Arrival: 5 lanes, 20 waves, all three zombie types
     static LevelConfig CreateLevel1_8();  ///< Bucket Brigade: 5 lanes, 10 waves, Buckethead debut
     static LevelConfig CreateLevel1_9();  ///< All Hands on Deck: 5 lanes, 20 waves, all four zombie types
+    static LevelConfig CreateLevel1_10(); ///< Conveyor Belt: 5 lanes, 20 waves, no sun mechanic
 };
 
 #endif // LEVEL_MANAGER_HPP

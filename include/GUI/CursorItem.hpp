@@ -21,6 +21,11 @@ public:
     void SetPlantType(PlantType type);
 
     /**
+     * @brief Set shovel mode (display shovel cursor).
+     */
+    void SetShovel();
+
+    /**
      * @brief Clear the cursor item (hide it).
      */
     void Clear();
