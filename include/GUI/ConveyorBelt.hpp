@@ -22,7 +22,7 @@ class SeedPacket;
  */
 class ConveyorBelt : public Util::GameObject {
 public:
-    static constexpr int   MAX_CARDS   = 10;
+    static constexpr int   MAX_CARDS   = 8;
     static constexpr float CARD_SLOT_W = 75.0f;
     static constexpr float CARD_SLOT_H = 130.0f;
 

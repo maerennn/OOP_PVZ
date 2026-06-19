@@ -67,6 +67,28 @@ void App::MainMenu() {
         m_Root.AddChild(m_MenuAdventureBtn);
         m_MainMenuObjects.push_back(m_MenuAdventureBtn);
 
+        // Debug mode label and checkbox (positioned below Adventure button)
+        float debugLabelX = 300.0f;
+        float debugLabelY = 100.0f;
+        float checkboxX = 150.0f;
+        float checkboxY = 120.0f;
+
+        m_DebugModeLabel = std::make_shared<Util::GameObject>();
+        m_DebugModeLabel->SetDrawable(std::make_shared<Util::Image>(
+            RESOURCE_DIR "/Background/debugmode.png"));
+        m_DebugModeLabel->SetZIndex(1.0f);
+        m_DebugModeLabel->m_Transform.translation = {debugLabelX, debugLabelY};
+        m_Root.AddChild(m_DebugModeLabel);
+        m_MainMenuObjects.push_back(m_DebugModeLabel);
+
+        m_DebugCheckbox = std::make_shared<Util::GameObject>();
+        m_DebugCheckbox->SetDrawable(std::make_shared<Util::Image>(
+            RESOURCE_DIR "/Background/options_checkbox0.png"));
+        m_DebugCheckbox->SetZIndex(1.0f);
+        m_DebugCheckbox->m_Transform.translation = {checkboxX, checkboxY};
+        m_Root.AddChild(m_DebugCheckbox);
+        m_MainMenuObjects.push_back(m_DebugCheckbox);
+
         m_MainMenuInitialized = true;
         LOG_DEBUG("MainMenu: screen initialised");
     }
@@ -91,9 +113,25 @@ void App::MainMenu() {
         ));
     }
 
+    // ── Debug checkbox detection ────────────────────────────────────────
+    constexpr float CHECKBOX_HALF_SIZE = 15.0f;
+    glm::vec2 checkboxPos = m_DebugCheckbox->m_Transform.translation;
+    bool checkboxHovered = (std::abs(cursor.x - checkboxPos.x) <= CHECKBOX_HALF_SIZE &&
+                            std::abs(cursor.y - checkboxPos.y) <= CHECKBOX_HALF_SIZE);
+
+    if (checkboxHovered && Util::Input::IsKeyUp(Util::Keycode::MOUSE_LB)) {
+        // Toggle debug option
+        m_DebugOptionEnabled = !m_DebugOptionEnabled;
+        m_DebugCheckbox->SetDrawable(std::make_shared<Util::Image>(
+            m_DebugOptionEnabled ? RESOURCE_DIR "/Background/options_checkbox1.png"
+                                 : RESOURCE_DIR "/Background/options_checkbox0.png"
+        ));
+        LOG_DEBUG("Debug option toggled: {}", m_DebugOptionEnabled ? "ON" : "OFF");
+    }
+
     // ── Click detection ─────────────────────────────────────────────────
     if (hovered && Util::Input::IsKeyUp(Util::Keycode::MOUSE_LB)) {
-        if (GameConfig::DEBUG_MODE) {
+        if (m_DebugOptionEnabled) {
             m_CurrentState = State::LEVEL_SELECT;
         } else {
             m_SelectedLevel = 1;
@@ -633,8 +671,14 @@ void App::ShowResultOverlay(bool won) {
         addText("YOU WIN!",
                 64, {0.0f, 60.0f},  Util::Color(255, 220,  0, 255), Z);
     } else {
-        addText("GAME OVER",
-                64, {0.0f, 60.0f},  Util::Color(220,  30, 30, 255), Z);
+        // Display GameOver image instead of text
+        auto gameOverImg = std::make_shared<Util::GameObject>();
+        gameOverImg->SetDrawable(std::make_shared<Util::Image>(
+            RESOURCE_DIR "/Background/GameOver.png"));
+        gameOverImg->m_Transform.translation = {0.0f, 60.0f};
+        gameOverImg->SetZIndex(Z);
+        m_Root.AddChild(gameOverImg);
+        m_ResultObjects.push_back(gameOverImg);
     }
     addText("Press ENTER or SPACE to return to menu",
             22, {0.0f, -20.0f}, Util::Color(255, 255, 255, 255), Z);

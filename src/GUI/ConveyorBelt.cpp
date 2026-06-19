@@ -62,6 +62,7 @@ void ConveyorBelt::Update(float deltaTime) {
                 currentX = std::max(currentX - step, targetX);
             }
             card->m_Transform.translation.x = currentX;
+            card->UpdateChildPositions();  // Update visual position
         }
     }
 

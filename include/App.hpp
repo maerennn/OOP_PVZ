@@ -89,6 +89,9 @@ private:
     bool m_MainMenuInitialized = false;
     std::vector<std::shared_ptr<Util::GameObject>> m_MainMenuObjects;
     std::shared_ptr<Util::GameObject> m_MenuAdventureBtn;  ///< kept for per-frame hit-test
+    std::shared_ptr<Util::GameObject> m_DebugModeLabel;    ///< debugmode.png label
+    std::shared_ptr<Util::GameObject> m_DebugCheckbox;     ///< checkbox for debug option
+    bool m_DebugOptionEnabled = false;                     ///< tracks checkbox state
 
     // ── Level selection state ─────────────────────────────────────────
     int  m_SelectedLevel           = 1;    ///< 1–4, set in LevelSelect()

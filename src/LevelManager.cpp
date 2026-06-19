@@ -25,18 +25,25 @@ LevelConfig LevelManager::CreateLevel1_1() {
     LevelConfig cfg;
     cfg.activeLanes = {3};                      // middle lane only
     cfg.seedBank    = {PlantType::PEASHOOTER};  // Peashooter only
-    cfg.startingSun = 1000;                      // enough for 1 Peashooter + bonus
+    cfg.startingSun = 100;                      // enough for 1 Peashooter + bonus
 
     using Z = ZombieType;
 
     // One wave: 5 Basics in lane 3, spaced 8 s apart so each arrives solo
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 3,  0.0f},
-        {Z::CONEHEAD, 3,  8.0f},
-        {Z::BUCKETHEAD, 3, 16.0f},
-        {Z::NORMAL, 3, 24.0f},
-        {Z::NORMAL, 3, 32.0f}
+        {Z::NORMAL, 3,  16.0f},
     }, false});
+
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 3, 0.0f},
+        {Z::NORMAL, 3, 12.0f},
+    }, false});
+
+    cfg.zombieWaves.waves.push_back({{
+        {Z::NORMAL, 3, 8.0f}
+    }, false});
+
 
     cfg.rewardPlant  = PlantType::SUNFLOWER;
     cfg.nextLevelNum = 2;
@@ -61,16 +68,16 @@ LevelConfig LevelManager::CreateLevel1_2() {
     // Wave 1: one Basic per active lane, staggered
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 2, 0.0f},
-        {Z::NORMAL, 3, 5.0f},
-        {Z::NORMAL, 4, 10.0f}
+        {Z::NORMAL, 3, 32.0f},
+        {Z::NORMAL, 4, 52.0f}
     }, false});
 
     // Wave 2: 4 Basics, random within active lanes (lane 0 → random)
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 4.0f},
-        {Z::NORMAL, 0, 7.0f},
-        {Z::NORMAL, 0, 10.0f}
+        {Z::NORMAL, 0, 8.0f},
+        {Z::NORMAL, 0, 16.0f},
+        {Z::NORMAL, 0, 32.0f}
     }, false});
 
     // Wave 3 (flag): first Conehead appearance + 4 Normals
@@ -109,30 +116,30 @@ LevelConfig LevelManager::CreateLevel1_3() {
     // Wave 1: easy pair, random lanes
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 0, 0.0f},
-        {Z::NORMAL, 0, 15.0f}
+        {Z::NORMAL, 0, 24.0f}
     }, false});
 
     // Wave 2: forced spread across 3 of the 4 active lanes
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 2, 0.0f},
-        {Z::NORMAL, 4, 4.0f},
-        {Z::NORMAL, 0, 8.0f}
+        {Z::NORMAL, 4, 8.0f},
+        {Z::NORMAL, 0, 16.0f}
     }, false});
 
     // Wave 3: first Conehead in a forced lane
     cfg.zombieWaves.waves.push_back({{
         {Z::CONEHEAD, 2, 0.0f},
         {Z::NORMAL,   0, 0.0f},
-        {Z::NORMAL,   0, 4.0f},
-        {Z::NORMAL,   0, 8.0f}
+        {Z::NORMAL,   0, 8.0f},
+        {Z::NORMAL,   0, 16.0f}
     }, false});
 
     // Wave 4: two Coneheads + two Normals
     cfg.zombieWaves.waves.push_back({{
         {Z::CONEHEAD, 0, 0.0f},
-        {Z::CONEHEAD, 0, 3.0f},
+        {Z::CONEHEAD, 0, 8.0f},
         {Z::NORMAL,   0, 1.0f},
-        {Z::NORMAL,   0, 5.0f}
+        {Z::NORMAL,   0, 12.0f}
     }, false});
 
     // Wave 5 (flag): large wave to cap the level
@@ -176,21 +183,21 @@ LevelConfig LevelManager::CreateLevel1_4() {
     // Wave 2: 2 Normals, lanes 2 & 4
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 2, 0.0f},
-        {Z::NORMAL, 4, 5.0f}
+        {Z::NORMAL, 4, 8.0f}
     }, false});
 
     // Wave 3: 3 Normals, random, staggered
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 0, 0.0f},
         {Z::NORMAL, 0, 4.0f},
-        {Z::NORMAL, 0, 8.0f}
+        {Z::NORMAL, 0, 12.0f}
     }, false});
 
     // Wave 4: 3 Normals, forced top/middle/bottom
     cfg.zombieWaves.waves.push_back({{
         {Z::NORMAL, 1, 0.0f},
         {Z::NORMAL, 3, 3.0f},
-        {Z::NORMAL, 5, 6.0f}
+        {Z::NORMAL, 5, 9.0f}
     }, false});
 
     // Wave 5: 4 Normals, random, staggered

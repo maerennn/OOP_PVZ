@@ -19,7 +19,7 @@ void SeedPacketDrop::Initialize() {
     SetZIndex(GameConfig::ZIndex::CURSOR_ITEM - 0.5f);
 
     // Match the seed bank packet scale (SeedPacket uses ~50×70 px)
-    m_Transform.scale = {0.5f, 0.5f};
+    m_Transform.scale = {0.2f, 0.2f};
 }
 
 void SeedPacketDrop::Update(float deltaTime) {
