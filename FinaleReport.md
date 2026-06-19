@@ -2,9 +2,9 @@
 
 ## Group Information
 
-**Group Number:T18** 
-**Members:113590036 蘇玫人** 
-**Replicated Game:Plant vs. Zombie** 
+- **Group Number: T18** 
+- **Members: 113590036 蘇玫人** 
+- **Replicated Game: Plant vs. Zombie** 
 
 ---
 
@@ -53,7 +53,26 @@ The objective of the game is to prevent zombies from reaching the player's house
 - Progress through the level is indicated by a wave progress bar, and larger waves are marked by flag indicators.
 
 ### Game Screenshots / UI
+- **Menu screen** with Start Adventure button and Check off Debug Mode.
+  
+  ![Title Screen](Resources\Report\MainMenu_Report.png)
 
+- **Debug Menu screen** If Debug Mode checkoff, it will go through Debug Menu screen.
+  
+  ![Level Intro Screen](Resources\Report\DebugMenu_Report.png)
+
+- **Main gameplay screen** At the top, there is Seed Bank, Sun Manager (to count the sun), Seed Packet for each level, and for some level there are Shovel.
+
+  ![Main Gameplay Screen - Level 1-1](Resources\Report\ingame01_report.png)
+
+  ![Main Gameplay Screen - Level 1-1 Finished](Resources\Report\ingameFinish_report.png)
+  - Example: after finishing a level, it will drop a plant (this level is Sunflower) to be clicked and enter the next level
+
+  ![Main Gameplay Screen - Other Levels with 5 lane](Resources\Report\InGame_Report.png)
+   -Other Levels with 5 lane
+
+- **Win scene** after finishing the level 1-10.
+  ![Win Scene](Resources\Report\Win_report.png)
 ---
 
 ## Software Design & Architecture
