@@ -2,25 +2,56 @@
 
 ## Group Information
 
-**Group Number:** 
-**Members:** 
-**Replicated Game:** 
+**Group Number:T18** 
+**Members:113590036 蘇玫人** 
+**Replicated Game:Plant vs. Zombie** 
 
 ---
 
 ## Project Overview
 
 ### Game Introduction
-*(Briefly describe the game here)*
+This project recreates the Day stages of Plants vs. Zombies, a tower defense game developed by PopCap Games. In the game, players defend their house from waves of approaching zombies by strategically placing different types of plants, each with unique abilities. Sun serves as the primary resource and must be collected and managed carefully to deploy plants effectively.
 
-### Group Division of Labor
-*(Outline who did what)*
+The recreated version focuses on the Day levels from the original game. Levels 1 to 4 and Levels 6 to 9 follow the standard gameplay mechanics, where players collect sun, select plants from a seed bank, and place them on a 5×9 grid to stop zombies before they reach the left side of the lawn. As the levels progress, additional plant varieties and stronger zombie types are introduced, requiring increasingly strategic placement and resource management.
+
+Level 5 of the original game, Wall-nut Bowling, was not included in this project because it features a completely different gameplay style from the standard tower defense mechanics. Since the objective of the project was to emphasize object-oriented design and reusable game systems, the focus was placed on the core planting and zombie interaction mechanics.
+
+Level 10 recreates the original game's first Conveyor Belt level. Unlike the previous stages, players do not collect or spend sun. Instead, plants are supplied automatically through a conveyor belt, and the player must place the randomly provided plants strategically to defend against incoming zombie waves. This mode removes the resource management aspect and shifts the challenge toward efficient use of the available plants and quick decision-making.
+
+Overall, the project recreates the fundamental mechanics and progression of the early Day stages of Plants vs. Zombies, demonstrating how object-oriented programming principles can be applied to implement game entities, behaviors, and systems in a structured and extensible manner.
 
 ---
 
 ## Game Features & Mechanics
 
 ### Game Rules
+The objective of the game is to prevent zombies from reaching the player's house by placing plants strategically on a 5×9 lawn grid. Each plant possesses different abilities, such as attacking zombies, producing sun, blocking enemies, or dealing area damage.
+
+### Standard Levels (1–4 and 6–9)
+ - The player starts each level with a predefined amount of sun.
+- Sun can be collected and used as the in-game currency for planting.
+- Plants are selected from the seed bank and can only be planted on unoccupied grid cells.
+- Each plant has an associated sun cost and a recharge time before it can be used again.
+- Zombies spawn in waves and advance from the right side of the lawn toward the house.
+- Attacking plants automatically target zombies within their lane.
+- If a zombie reaches the left edge of the lawn, the game is lost.
+- The level is completed when all zombie waves have been defeated.
+
+### Conveyor Belt Level (Level 10)
+ - No sun is generated or required for planting.
+- Plants are supplied automatically through a conveyor belt instead of being selected from a seed bank.
+- Players may only place the plants currently available on the conveyor belt.
+- Strategic placement and efficient use of the provided plants are essential, as plant availability is randomized.
+- The level is completed when all zombie waves have been eliminated.
+- The game is lost if any zombie reaches the player's house.
+### General Rules
+- Only one plant may occupy a grid cell at a time.
+- Plants and zombies have health points and can be damaged or destroyed.
+- Different plant types provide different functions, including ranged attacks, defense, sun production, and instant elimination.
+- Some zombies possess special abilities or additional armor, making them more difficult to defeat.
+- Progress through the level is indicated by a wave progress bar, and larger waves are marked by flag indicators.
+
 ### Game Screenshots / UI
 
 ---
@@ -162,28 +193,38 @@ CMakeLists.txt         # Build configuration
 ```
 
 ### AI / AI Agent Integration
-*(Only fill out this section if you integrated AI/AI Agents into your project; otherwise, feel free to delete it)*
+GitHub Copilot was used as an AI-assisted development tool. Claude Opus (4.5 and 4.6) and Claude Sonnet (4.5 and 4.6) models were utilized for code suggestions, debugging assistance, and implementation guidance during development.
 
 ---
 
 ## Conclusion & Reflection
 
 ### Challenges & Solutions
-*(Describe the bugs or obstacles you faced and how you fixed them)*
+
+- **Problem 1 — Projectile collision issues:** Pea projectiles would occasionally pass through zombies without dealing damage, causing inconsistent gameplay.
+   - **Solution:** Improved collision detection by using object positions and ensuring entities are updated before collision checks, resulting in more reliable hits.
+
+- **Problem 2 — Resource initialization order and runtime stalls:** Initially some assets were still being loaded or uploaded during gameplay, causing stalls and occasional invalid textures when OpenGL uploads ran off the main thread. To fix this, `ResourceManager` is designed to preload all required assets during the boot phase so resources are available before gameplay begins.
+   - **Solution:** Implemented a `ResourceManager` that performs single-threaded cache population at `App::Boot()`, moved all GPU texture uploads to the main thread, and added validation checks to ensure texture handles are valid before entering play state.
+
+- **Problem 3 — Monolithic armored zombie classes (Conehead/Buckethead):** At first the conehead and buckethead zombies were implemented as distinct monolithic classes, embedding armor behavior directly. This made it hard to share armor logic, add new armor types, or reuse behaviors across zombie types.
+   - **Solution:** Refactored to a composition model: introduced `Armor` components (e.g., `ConeheadArmor`, `BucketheadArmor`) that can be attached to any `Zombie`. Centralized damage/armor-breaking logic and exposed armor-specific callbacks, simplifying extension and reducing duplicated code.
 
 ### Self-Assessment
 
 | No. | Criteria | Completed |
 |:---:|:---|:---:|
 | 1   | This is an example | V |
-| 2   | Changed the repository privacy/permissions to **Public** |  |
-| 3   | Features a functional **Debug Mode** |  |
-| 4   | Resolved all **Memory Leak** issues in the project |  |
-| 5   | No typos, grammatical errors, or missing sections in this report |  |
-| 6   | Report maintains a clean aesthetic and is highly human-readable |  |
+| 2   | Changed the repository privacy/permissions to **Public** | V |
+| 3   | Features a functional **Debug Mode** | V |
+| 4   | Resolved all **Memory Leak** issues in the project | V |
+| 5   | No typos, grammatical errors, or missing sections in this report | V |
+| 6   | Report maintains a clean aesthetic and is highly human-readable | V |
 
 ### Reflections / Takeaways
-*(Individual or collective thoughts on what you learned)*
+This project allowed me to apply the fundamental concepts of object-oriented programming to a real-world application through game development. I chose Plants vs. Zombies because its gameplay mechanics provide a clear structure for implementing OOP concepts, especially through the variety of plants and zombies with different behaviors and characteristics.
+
+Throughout the development process, I gained a deeper understanding of how inheritance, polymorphism, encapsulation, and abstraction can be used to design extensible and maintainable systems. Recreating the game also gave me practical experience in managing interactions between different game objects and organizing a larger software project. Overall, this project helped bridge the gap between theoretical OOP concepts learned in class and their practical implementation in video game development.
 
 ### Contribution Percentage
-*(e.g., Member A: 50%, Member B: 50%)*
+- Self: 100%
